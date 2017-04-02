@@ -7,6 +7,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 /*Let’s look at a shell from the top down. A shell does three main things in its lifetime.
 
@@ -14,16 +15,19 @@
     Interpret: Next, the shell reads commands from stdin (which could be interactive, or a file) and executes them.
     Terminate: After its commands are executed, the shell executes any shutdown commands, frees up any memory, and terminates.
 */
+struct command
+{
+  const char **argv;
+};
 
 /*
   Function Declarations for builtin shell commands:
  */
-
 int lsh_cd(char **args);
 int lsh_help(char **args);
 int lsh_exit(char **args);
 int lsh_ls(char **args);
-int lsh_pipe(char **args);
+int lsh_pipe(int n, struct command *cmd);
 
 /*
   List of builtin commands, followed by their corresponding functions.
@@ -122,10 +126,63 @@ int lsh_ls(char **args)
   return 1;
 }
 
-int lsh_pipe(char **args) 
+int spawn_proc (int in, int out, struct command *cmd)
 {
-  return 1;
+  pid_t pid;
+
+  if ((pid = fork ()) == 0)
+    {
+      if (in != 0)
+        {
+          dup2 (in, 0);
+          close (in);
+        }
+
+      if (out != 1)
+        {
+          dup2 (out, 1);
+          close (out);
+        }
+
+      return execvp (cmd->argv [0], (char * const *)cmd->argv);
+    }
+
+  return pid;
 }
+
+int lsh_pipe (int n, struct command *cmd)
+{
+  int i;
+  pid_t pid;
+  int in, fd [2];
+
+  /* The first process should get its input from the original file descriptor 0.  */
+  in = 0;
+
+  /* Note the loop bound, we spawn here all, but the last stage of the pipeline.  */
+  for (i = 0; i < n - 1; ++i)
+    {
+      pipe (fd);
+
+      /* f [1] is the write end of the pipe, we carry `in` from the prev iteration.  */
+      spawn_proc (in, fd [1], cmd + i);
+
+      /* No need for the write end of the pipe, the child will write here.  */
+      close (fd [1]);
+
+      /* Keep the read end of the pipe, the next child will read from there.  */
+      in = fd [0];
+    }
+
+  /* Last stage of the pipeline - set stdin be the read end of the previous pipe
+     and output to the original file descriptor 1. */  
+  if (in != 0)
+    dup2 (in, 0);
+
+  /* Execute the last stage with the current process. */
+  return execvp (cmd [i].argv [0], (char * const *)cmd [i].argv);
+}
+
 
 /*All this does is check if the command equals each builtin, and if so, run it. 
 If it doesn’t match a builtin, it calls lsh_launch() to launch the process. */
@@ -250,7 +307,11 @@ void lsh_loop(void)
 int main(int argc, char **argv)
 {
   // Load config files, if any.
-
+  const char *lscmd[] = { "ls", "-al", NULL};
+  const char *wccmd[] = { "wc", NULL};
+  const char *awkcmd[] = { "awk", "{print $2}", NULL};
+ 
+  struct command cmd [] = { {lscmd}, {wccmd}, {awkcmd} };
   // Run command loop.
   lsh_loop();
 
