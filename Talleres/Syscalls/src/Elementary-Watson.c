@@ -7,6 +7,18 @@
 #include <stdlib.h>
 #include <errno.h>
 
+
+void sigurHandler(int sig) {
+	int i = 0;
+	while (i <= 5){
+	sleep(1);
+	printf("sup!\n");
+	printf("ya va!\n");
+	i++;
+	}
+	return;
+}
+
 int main(int argc, char* argv[]) {
 	int status;
 	pid_t child;
@@ -15,26 +27,18 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "Uso: %s commando [argumentos ...]\n", argv[0]);
 		exit(1);
 	}
-
+	signal(SIGURG,sigurHandler);
 	/* Fork en dos procesos */
 	child = fork();
 	if (child == -1) { perror("ERROR fork"); return 1; }
 	if (child == 0) {
-
-		int i = 0;
-		while(i < 5)
-		{
-			sleep(1);
-			printf("sup\n");
-			printf("ya va!\n");
-			i++;
-		}
-
+	
 		execvp(argv[1], argv+1);
 		/* Si vuelve de exec() hubo un error */
 		perror("ERROR child exec(...)"); exit(1);
 	} else {
-		/* S'olo se ejecuta en el Padre */
+		/* S'olo se ejecuta en el Padre */	
+		kill(child,SIGURG);
 		while(1) {
 			if (wait(&status) < 0) { perror("waitpid"); break; }
 			if (WIFEXITED(status)) break; /* Proceso terminado */
