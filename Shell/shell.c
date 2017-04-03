@@ -313,6 +313,7 @@ int main(int argc, char **argv)
  
   struct command cmd [] = { {lscmd}, {wccmd}, {awkcmd} };
   // Run command loop.
+
   lsh_loop();
 
   // Perform any shutdown/cleanup.
