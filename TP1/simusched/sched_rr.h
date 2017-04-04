@@ -5,6 +5,9 @@
 #include <queue>
 #include "basesched.h"
 
+using namespace std; 
+
+
 class SchedRR : public SchedBase {
 	public:
 		SchedRR(std::vector<int> argn);
@@ -14,7 +17,10 @@ class SchedRR : public SchedBase {
 		virtual int tick(int cpu, const enum Motivo m);
 
 	private:
-		// Completar
+		int quantum;
+		std::queue<int> q; //cola global de los procesos
+		vector<int> quantum_cpu; //contador de ticks por procesador para que termine el quantum
+		vector<int> endquantum_cpu; //vector que indica por procesador, el kuantum en el cual termina
 };
 
 #endif
