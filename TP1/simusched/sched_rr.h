@@ -20,7 +20,7 @@ class SchedRR : public SchedBase {
 		int quantum;
 		std::queue<int> q; //cola global de los procesos
 		vector<int> quantum_cpu; //contador de ticks por procesador para que termine el quantum
-		vector<int> endquantum_cpu; //vector que indica por procesador, el kuantum en el cual termina
+		vector<int> endquantum_cpu; //vector que indica por procesador, el quantum en el cual termina
 };
 
 #endif

@@ -36,7 +36,9 @@ void TaskPajarillo(int pid, vector<int> params){ //cant_rep, tiempo_cpu, tiempo_
 	}
 }
 
-
+void TaskPriorizada(int pid, vector<int> params){ //prioridad, CPU time.
+		uso_CPU(pid, params[1]);			
+}
 
 
 void tasks_init(void) {
@@ -48,4 +50,5 @@ void tasks_init(void) {
 	register_task(TaskAlterno, -1);
 	register_task(TaskConsola, 3);
 	register_task(TaskPajarillo, 3);
+	register_task(TaskPriorizada, 1)
 }

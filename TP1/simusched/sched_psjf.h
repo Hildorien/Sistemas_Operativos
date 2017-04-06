@@ -10,14 +10,17 @@ using namespace std;
 
 class SchedPSJF : public SchedBase {
 	public:
-		SchedMistery(std::vector<int> argn);
-        	~SchedMistery();
+		SchedPSJF(std::vector<int> argn);
+        	~SchedPSJF();
 		virtual void load(int pid);
 		virtual void unblock(int pid);
 		virtual int tick(int cpu, const enum Motivo m);
 
 	private:
-		// Completar
+
+		vector< vector<int> > queue_prior_time;  
+		
+		  
 };
 
 #endif

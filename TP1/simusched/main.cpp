@@ -13,6 +13,7 @@
 #include "sched_fcfs.h"
 #include "sched_rr.h"
 #include "sched_mistery.h"
+#include "sched_psjf.h"
 
 using namespace std;
 
