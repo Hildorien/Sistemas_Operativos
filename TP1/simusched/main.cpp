@@ -177,6 +177,7 @@ SchedBase* sched_create(const char* sched, vector<int> argn) {
 	_sched_create(SchedFCFS, -1)
 	_sched_create(SchedMistery, -1)
 	_sched_create(SchedRR, -1)
+	_sched_create(SchedPSJF, -1)
 	return NULL;
 }
 

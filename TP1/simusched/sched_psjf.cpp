@@ -1,14 +1,11 @@
-#ifndef __SCHED_PSJF__
-#define __SCHED_PSJF__
-
 #include <vector>
 #include <queue>
 #include <algorithm>
-#include <iostream>
-#include <string.h>
 #include "basesched.h"
 #include "sched_psjf.h"
-
+#include <iostream>
+#include <string.h>
+#include "simu.cpp"
 using namespace std;
 
 SchedPSJF::SchedPSJF(vector<int> argn) {
