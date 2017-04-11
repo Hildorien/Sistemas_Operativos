@@ -2,7 +2,7 @@ export LC_ALL=C
 CXXFLAGS= -Wall -pedantic -g -ggdb
 LDFLAGS= -lpthread
 
-OBJS=main.o simu.o basesched.o basetask.o tasks.o sched_fcfs.o sched_rr.o sched_psjf.o
+OBJS=main.o simu.o basesched.o basetask.o tasks.o sched_fcfs.o sched_rr.o
 MAIN=simusched
 
 .PHONY: all clean new

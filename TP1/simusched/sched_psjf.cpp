@@ -18,9 +18,11 @@ SchedPSJF::~SchedPSJF() {
 
 
 void SchedPSJF::load(int pid) {
-	vector<int>* datos = task_params(pid);
+	vector<int>* datos = tsk_params(pid);
 	vector<int> trip(3);
-	trip[0] = pid; trip[1] = datos[0]; trip[2] = datos[1]; // trip = [pid,prioridad,tiempo]
+	trip[0] = pid; 
+	trip[1] = (*datos)[0]; 
+	trip[2] = (*datos)[1]; // trip = [pid,prioridad,tiempo]
 	this->queue_prior_time.push_back(trip);
 	int i = this->queue_prior_time.size() -1 ;
 	
@@ -52,8 +54,9 @@ int SchedPSJF::tick(int cpu, const enum Motivo m) {
 		for (int i = 0; i < this->queue_prior_time.size(); i++)
 		{
 			if(this->queue_prior_time[i][0] == curpid)
-			{
-				this->queue_prior_time.erase(i);
+			{	
+				//vector< vector<int> >::iterator it = this->queue_prior_time.begin();
+				this->queue_prior_time.erase(this->queue_prior_time.begin() + i);
 			}
 		}
 	}
