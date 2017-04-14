@@ -5,7 +5,7 @@
 #include "sched_psjf.h"
 #include <iostream>
 #include <string.h>
-#include "simu.cpp"
+
 using namespace std;
 
 SchedPSJF::SchedPSJF(vector<int> argn) {
@@ -26,7 +26,7 @@ void SchedPSJF::load(int pid) {
 	this->queue_prior_time.push_back(trip);
 	int i = this->queue_prior_time.size() -1 ;
 	
-	while (this->queue_prior_time[i-1][1] > this->queue_prior_time[i-1][1] && i > -1){
+	while ( i > 0 && this->queue_prior_time[i-1][1] > this->queue_prior_time[i-1][1]  ){
 		swap(this->queue_prior_time[i-1][1],this->queue_prior_time[i][1]);
 		i--;
 	}
@@ -37,7 +37,7 @@ void SchedPSJF::load(int pid) {
 	
 	}else{
 
-		while(this->queue_prior_time[i-1][2] > this->queue_prior_time[i-1][1]  && i > -1 ){
+		while(i > 0 && this->queue_prior_time[i-1][2] > this->queue_prior_time[i-1][1]  ){
 			swap(this->queue_prior_time[i-1][1],this->queue_prior_time[i][1]);
 			i--;
 		}

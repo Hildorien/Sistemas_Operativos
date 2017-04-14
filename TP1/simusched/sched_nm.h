@@ -19,7 +19,6 @@ class SchedNoMistery : public SchedBase {
 	private:
 
 		vector< vector<int> > queue_prior_time;  
-		int time;
 		  
 };
 

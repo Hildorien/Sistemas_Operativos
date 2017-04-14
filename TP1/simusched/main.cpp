@@ -14,7 +14,7 @@
 #include "sched_rr.h"
 #include "sched_mistery.h"
 #include "sched_psjf.h"
-
+#include "sched_nm.h"
 using namespace std;
 
 ostream& operator<<(ostream &os, const Settings &s)
