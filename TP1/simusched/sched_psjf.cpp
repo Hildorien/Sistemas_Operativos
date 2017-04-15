@@ -26,19 +26,23 @@ void SchedPSJF::load(int pid) {
 	this->queue_prior_time.push_back(trip);
 	int i = this->queue_prior_time.size() -1 ;
 	
-	while ( i > 0 && this->queue_prior_time[i-1][1] > this->queue_prior_time[i-1][1]  ){
+	while ( i > 0 && this->queue_prior_time[i][1] > this->queue_prior_time[i-1][1]  ){
+		swap(this->queue_prior_time[i-1][0],this->queue_prior_time[i][0]);
 		swap(this->queue_prior_time[i-1][1],this->queue_prior_time[i][1]);
+		swap(this->queue_prior_time[i-1][2],this->queue_prior_time[i][2]);
 		i--;
 	}
 	
-	if( i== 0 || i == -1 || this->queue_prior_time[i-1][1] < this->queue_prior_time[i-1][1]){
+	if( i== 0 || i == -1 || this->queue_prior_time[i-1][2] < this->queue_prior_time[i][2]){
 		
 		return;
 	
 	}else{
 
-		while(i > 0 && this->queue_prior_time[i-1][2] > this->queue_prior_time[i-1][1]  ){
+		while(i > 0 && this->queue_prior_time[i][2] > this->queue_prior_time[i-1][2]  ){
+			swap(this->queue_prior_time[i-1][0],this->queue_prior_time[i][0]);
 			swap(this->queue_prior_time[i-1][1],this->queue_prior_time[i][1]);
+			swap(this->queue_prior_time[i-1][2],this->queue_prior_time[i][2]);
 			i--;
 		}
 	}
