@@ -26,26 +26,22 @@ void SchedPSJF::load(int pid) {
 	this->queue_prior_time.push_back(trip);
 	int i = this->queue_prior_time.size() -1 ;
 	
-	while ( i > 0 && this->queue_prior_time[i][1] > this->queue_prior_time[i-1][1]  ){
+	while ( i > 0 && this->queue_prior_time[i][1] > this->queue_prior_time[i-1][1]  ){ // [<3,5,3>,<2,3,2>,<1,3,1>]  ordenado de derecha a izquierda
 		swap(this->queue_prior_time[i-1][0],this->queue_prior_time[i][0]);
 		swap(this->queue_prior_time[i-1][1],this->queue_prior_time[i][1]);
 		swap(this->queue_prior_time[i-1][2],this->queue_prior_time[i][2]);
 		i--;
 	}
 	
-	if( i== 0 || i == -1 || this->queue_prior_time[i-1][2] < this->queue_prior_time[i][2]){
-		
-		return;
-	
-	}else{
 
-		while(i > 0 && this->queue_prior_time[i][2] > this->queue_prior_time[i-1][2]  ){
-			swap(this->queue_prior_time[i-1][0],this->queue_prior_time[i][0]);
-			swap(this->queue_prior_time[i-1][1],this->queue_prior_time[i][1]);
-			swap(this->queue_prior_time[i-1][2],this->queue_prior_time[i][2]);
-			i--;
-		}
+
+	while(i > 0 && this->queue_prior_time[i][1] == this->queue_prior_time[i-1][1] && this->queue_prior_time[i][2] > this->queue_prior_time[i-1][2]  ){
+		swap(this->queue_prior_time[i-1][0],this->queue_prior_time[i][0]);
+		swap(this->queue_prior_time[i-1][1],this->queue_prior_time[i][1]);
+		swap(this->queue_prior_time[i-1][2],this->queue_prior_time[i][2]);
+		i--;
 	}
+	
 	
 }
 
@@ -54,18 +50,23 @@ void SchedPSJF::unblock(int pid) {
 
 int SchedPSJF::tick(int cpu, const enum Motivo m) {
 	if( m == EXIT ) {
-		int curpid = current_pid(cpu);
-		for (int i = 0; i < this->queue_prior_time.size(); i++)
+
+		if(!queue_prior_time.empty())
 		{
-			if(this->queue_prior_time[i][0] == curpid)
-			{	
-				//vector< vector<int> >::iterator it = this->queue_prior_time.begin();
-				this->queue_prior_time.erase(this->queue_prior_time.begin() + i);
-			}
+			vector<int> trip = (this->queue_prior_time)[queue_prior_time.size()-1];
+			queue_prior_time.pop_back();
+			return trip[0];
 		}
+		return IDLE_TASK;
 	}
 	
 	if(m == TICK){
-		return this->queue_prior_time[0][0];
+		if (current_pid(cpu) == IDLE_TASK && !queue_prior_time.empty()) {
+			vector<int> trip = (this->queue_prior_time)[queue_prior_time.size()-1];
+			queue_prior_time.pop_back();
+			return trip[0];
+		} else {
+			return current_pid(cpu);
+		}
 	}
 }

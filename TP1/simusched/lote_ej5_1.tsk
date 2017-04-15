@@ -1,8 +1,7 @@
-TaskCPU 3
+TaskCPU 5
 @3:
 TaskCPU 3
-@5
-TaskCPU 3
-@10:
+@5:
+TaskCPU 6
 TaskCPU 3
 
