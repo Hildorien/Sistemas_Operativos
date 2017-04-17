@@ -18,7 +18,7 @@ class SchedPSJF : public SchedBase {
 
 	private:
 
-		vector< vector<int> > queue_prior_time;  
+		vector< vector<int> > queue_prior_time;  // cola de prioridades : [ <pid,prioridad,cpu_time> ]  
 		
 		  
 };
