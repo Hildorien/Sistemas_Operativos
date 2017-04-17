@@ -42,13 +42,13 @@ void SchedPSJF::load(int pid) {
 		i--;
 	}
 	
-	
 }
 
 void SchedPSJF::unblock(int pid) {
 }
 
 int SchedPSJF::tick(int cpu, const enum Motivo m) {
+	vector<int>* datos = tsk_params(current_pid(cpu));
 	if( m == EXIT ) {
 
 		if(!queue_prior_time.empty())
@@ -61,12 +61,26 @@ int SchedPSJF::tick(int cpu, const enum Motivo m) {
 	}
 	
 	if(m == TICK){
-		if (current_pid(cpu) == IDLE_TASK && !queue_prior_time.empty()) {
+		if (!queue_prior_time.empty()){
 			vector<int> trip = (this->queue_prior_time)[queue_prior_time.size()-1];
-			queue_prior_time.pop_back();
-			return trip[0]; // En esta coordenada se guarda el pid
-		} else {
-			return current_pid(cpu);
+			if (current_pid(cpu) == IDLE_TASK ) {
+				queue_prior_time.pop_back();
+				return trip[0]; // En esta coordenada se guarda el pid
+		
+			} else {
+				if((*datos)[1] > trip[1] || ((*datos)[1] == trip[1] && (*datos)[2] > trip[2]) ){
+					vector<int> prior_trip = (this->queue_prior_time)[queue_prior_time.size()-1];
+					(this->queue_prior_time)[queue_prior_time.size()-1][0] = current_pid(cpu);
+					(this->queue_prior_time)[queue_prior_time.size()-1][1] = (*datos)[0];
+					(this->queue_prior_time)[queue_prior_time.size()-1][2] = (*datos)[1]; 
+					return prior_trip[0];}
+				else {
+					return current_pid(cpu);
+				}
+			}
 		}
+		
+		else {
+				return current_pid(cpu);}
 	}
 }
