@@ -12,8 +12,8 @@ SchedRR::SchedRR(vector<int> argn) {
 	
 	for (int i = 0; i < argn[0]; i++ )
 	{
-		this->endquantum_cpu.push_back(argn[i+1]);
-		this->quantum_cpu.push_back(0);
+		this->endquantum_cpu.push_back(argn[i+1]); //Guardo los quantums por core
+		this->quantum_cpu.push_back(0); //Todos los cores comienzan con con el tick en 0
 	}
 }
 
