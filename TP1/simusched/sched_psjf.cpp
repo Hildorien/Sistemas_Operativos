@@ -68,10 +68,10 @@ int SchedPSJF::tick(int cpu, const enum Motivo m) {
 				return trip[0]; // En esta coordenada se guarda el pid
 		
 			} else {
-				if((*datos)[1] > trip[1] || ((*datos)[1] == trip[1] && (*datos)[2] > trip[2]) ){
-					vector<int> prior_trip = (this->queue_prior_time)[queue_prior_time.size()-1];
-					(this->queue_prior_time)[queue_prior_time.size()-1][0] = current_pid(cpu);
-					(this->queue_prior_time)[queue_prior_time.size()-1][1] = (*datos)[0];
+				if((*datos)[0] > trip[1] || ((*datos)[0] == trip[1] && (*datos)[1] > trip[2]) ){   // Si hay otra tarea mas prioritaria
+					vector<int> prior_trip = (this->queue_prior_time)[queue_prior_time.size()-1];  // vamos a cambiar la que esta corriendo
+					(this->queue_prior_time)[queue_prior_time.size()-1][0] = current_pid(cpu);     // por la ultima ya que la desalojada volvera
+					(this->queue_prior_time)[queue_prior_time.size()-1][1] = (*datos)[0];          // a correr despues
 					(this->queue_prior_time)[queue_prior_time.size()-1][2] = (*datos)[1]; 
 					return prior_trip[0];}
 				else {
