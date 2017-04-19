@@ -1,5 +1,5 @@
-#ifndef __SCHED_NM__
-#define __SCHED_NM_
+#ifndef __SCHED_PSJF__
+#define __SCHED_PSJF__
 
 #include <vector>
 #include <queue>
@@ -8,17 +8,18 @@
 
 using namespace std;
 
-class SchedNoMistery : public SchedBase {
+class SchedPSJF : public SchedBase {
 	public:
-		SchedNoMistery(std::vector<int> argn);
-        	~SchedNoMistery();
+		SchedPSJF(std::vector<int> argn);
+        	~SchedPSJF();
 		virtual void load(int pid);
 		virtual void unblock(int pid);
 		virtual int tick(int cpu, const enum Motivo m);
 
 	private:
 
-		vector< vector<int> > queue_prior_time;  // cola de prioridades [<pid,tiempo_cpu>]
+		vector< vector<int> > queue_prior_time;  // cola de prioridades : [ <pid,prioridad,cpu_time> ]  
+		
 		  
 };
 
