@@ -21,15 +21,15 @@ int main(int argc, char* argv[]) {
 	if (child == -1) { perror("ERROR fork"); return 1; }
 	if (child == 0) {
 
-		if(ptrace(PTRACE_KILL,0,NULL,NULL))
-		{
-			printf("JUSTICE RAINS FROM ABOVE!!!\n");
-			exit(1);
-		}
-
-		if(ptrace(PTRACE_TRACEME,0,NULL,NULL))
+		/*if(ptrace(PTRACE_TRACEME,0,NULL,NULL))
 		{
 			perror("ERROR child ptrace(PTRACE_TRACEME...)");
+			exit(1);
+		}*/
+
+		if(ptrace(PTRACE_KILL,0,NULL,NULL))
+		{
+			//perror("ERROR child ptrace(PTRACE_KILL...)");
 			exit(1);
 		}
 		execvp(argv[1], argv+1);
@@ -39,10 +39,12 @@ int main(int argc, char* argv[]) {
 		/* S'olo se ejecuta en el Padre */
 		while(1) {
 			if (wait(&status) < 0) { perror("waitpid"); break; }
-			if (WIFEXITED(status)) break; /* Proceso terminado */
+			printf("JUSTICE RAINS FROM ABOVE!!!\n");
 			ptrace(PTRACE_SYSCALL,child,NULL,NULL); /*Continua */
+			if (WIFEXITED(status)) break; /* Proceso terminado */
 		}
 		ptrace(PTRACE_DETACH,child,NULL,NULL); /*Liberamos al hijo */
+
 	}
 	return 0;
 }
