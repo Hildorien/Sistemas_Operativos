@@ -21,10 +21,11 @@ void TaskAlterno(int pid, vector<int> params) { // params: ms_pid, ms_io, ms_pid
 
 void TaskConsola(int pid, vector<int> params){// params: n, bmin, bmax ...
 	int n = params[0];
-	int b = params[2] - params[1];
+	int b = params[2] - params[1]; //b  = bmax - bmin
 	for (int i = 0; i < n; ++i){
 		
-		uso_IO(pid, rand()%b+params[1]);
+		uso_IO(pid, rand()%b + params[1]); // el tiempo de cpu será un número al azar modulo (bmax-bmin) + bmin y con eso nos aseguramos que el tiempo estará entre bmin y bmax.
+
 
 	}
 }
