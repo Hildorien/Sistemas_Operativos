@@ -43,35 +43,30 @@ int SchedRR::tick(int cpu, const enum Motivo m) {
 			return sig;
 		}
 	} else {
-		// Siempre sigue el pid actual mientras no termine.
-		if (current_pid(cpu) == IDLE_TASK && !q.empty()) {
-			int sig = q.front(); q.pop();
-			return sig;
-		} else if (current_pid(cpu) == IDLE_TASK && q.empty()) { // Si no hay nada en la cola y esta corriendo la idle devolver idle
-			return IDLE_TASK;
-		} else if (current_pid(cpu) != IDLE_TASK && q.empty()) {
-			if (this->quantum_cpu[cpu] + 1 == this->endquantum_cpu[cpu]) { // Si esta por terminar su quantum
-				quantum_cpu[cpu] = 0;                                      // reseteralo
+		if (q.empty()){
+			if (current_pid(cpu) != IDLE_TASK) { //si no es la tarea idle actualiza el quantum, si no se mantiene en 0
+				this->quantum_cpu[cpu] = (this->quantum_cpu[cpu] + 1) % this->endquantum_cpu[cpu];  
+			}
+			return current_pid(cpu); //siempre retorno el pid actual
+		}
+		else{
+			if (current_pid(cpu) == IDLE_TASK) { //si estoy en idle y la cola no esta vacia, cambio automaticamente, el quantum ya esta en 0
+				int sig = q.front(); q.pop();
+				return sig;
+			}
+			else
+			{	//si no, aumento en uno el quantum, si al hacerlo quantum actual % quantum del cpu es 0, entonces hay que hacer task switch
+				this->quantum_cpu[cpu] = (this->quantum_cpu[cpu] + 1) % this->endquantum_cpu[cpu];
+				if (this->quantum_cpu[cpu] == 0){
+					int sig = q.front(); q.pop(); // guardamos el que va a correr
+					q.push(current_pid(cpu));
+					return sig;
+				}
 				return current_pid(cpu);
 			}
-			else {
-				this->quantum_cpu[cpu] = this->quantum_cpu[cpu] + 1;  // Si no esta por terminarlo, actualizarlo
-				return current_pid(cpu); 
-			}
-			
-		}else { //Si queue no esta vacia y estaba corriendo idle
-			if (this->quantum_cpu[cpu] + 1 == this->endquantum_cpu[cpu]) { // Si esta por terminar su quantum
-				int sig = q.front(); q.pop(); // guardamos el que va a correr
-				q.push(current_pid(cpu)); // encolamos el actual
-				quantum_cpu[cpu] = 0; // resetear el quantum
-				return sig;  // mandamos a correr el primero de la cola
-			}
-			else {
-				this->quantum_cpu[cpu] = this->quantum_cpu[cpu] + 1;  // Si no esta por terminar su quantum solo actualizarlo
-				return current_pid(cpu); 
-			}
-
 		}
 	}
+		
+	
 }
 
