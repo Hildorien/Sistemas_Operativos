@@ -1,0 +1,1 @@
+El comando make ejerciciox crea las imagenes en la carpeta del ejercicio correspondiente. Todos los ejercicios tienen diagramas de Gantt aunque en algunos no pedian calcular las metricas. En esos casos son los graficos que utilizamos para verificar la funcionalidad del scheduler.
