@@ -27,7 +27,7 @@ public:
 	}
 
 	void push_front(const T& val) {
-		Nodo* new_node = new Node(val);	//Creamos un nuevo nodo.
+		Nodo* new_node = new Nodo(val);	//Creamos un nuevo nodo.
 		Nodo* local_head = _head.load(); //Guardamos el valor de la cabeza en una variable local
 		new_node->_next = local_head; // Asignamos a nuestro nodo, su valor siguiente (la cabeza)
 		while(!_head.compare_exchange_weak(local_head, new_node)) { //Mientras la cabeza actual de la lista sea distinta a la copia local, esta ultima se actualiza con la cabeza de la lista. CC: *this = new node;
