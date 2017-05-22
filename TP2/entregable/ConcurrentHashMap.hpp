@@ -13,15 +13,50 @@ class ConcurrentHashMap {
 private:
        vector<  Lista< pair<string, unsigned int> > > tabla; // Segun internet es mejor tener un vector para no tener que de-alocar el arrelgo con delete[].
        //Lista< pair<string, unsigned int> > tabla[TABLE_SIZE];
-       mutex adiLockeados[TABLE_SIZE];
-       mutex maxLockeados[TABLE_SIZE];
+       pthread_mutex_t mutexLock[TABLE_SIZE];
+       pthread_cond_t condVarLock[TABLE_SIZE];
+
+       int currentReaders[TABLE_SIZE]; //Almacena el numero de maximums que estan en simultaneo leyendo una lista
+       bool writer[TABLE_SIZE]; //Almacena un bool que dice si hay un thread escribiendo en la lista
+
+       void readLock(int i){
+         pthread_mutex_lock(&mutexLock[i]);
+         while(writer[i])
+            pthread_cond_wait(&condVarLock[i],&mutexLock[i]);
+         currentReaders[i]++;
+         pthread_mutex_unlock(&mutexLock[i]);
+       }
+
+       void readUnlock(int i){
+         pthread_mutex_lock(&mutexLock[i]);
+         currentReaders[i]--;
+         if (currentReaders[i] == 0)
+            pthread_cond_signal(&condVarLock[i]);
+         pthread_mutex_unlock(&mutexLock[i]);
+       }
+
+       void writeLock(int i){
+         pthread_mutex_lock(&mutexLock[i]);
+         while(writer[i] || currentReaders[i] > 0)
+            pthread_cond_wait(&condVarLock[i], &mutexLock[i]);
+         writer[i] = true;
+         pthread_mutex_unlock(&mutexLock[i]);
+       }
+
+       void writeUnlock(int i){
+         pthread_mutex_lock(&mutexLock[i]);
+         writer[i] = false;
+         pthread_cond_signal(&condVarLock[i]);
+         pthread_mutex_lock(&mutexLock[i]);
+       }
 
 public:
 
       ConcurrentHashMap(){
             tabla.resize(TABLE_SIZE); // El hash va a tener size 26
             for (int i = 0; i < TABLE_SIZE; i++){
-                 //tabla[i] = Lista();
+               Lista< pair<string, unsigned int> > vi;
+               tabla.push_back(vi);
             }
       }
 
@@ -34,8 +69,6 @@ public:
 
       void addAndInc(string key){
             int ik = hash(key[0]);
-            maxLockeados[ik].try_lock(); //averiguo si el lock de max esta tomado, si no lo esta lo blockeo
-            adiLockeados[ik].lock();//aca lockeamos el mutex que le corresponde a la key del string
             Lista< pair<string, unsigned int> >::Iterador it = tabla[ik].CrearIt();
             bool encontrado = false;
             while(it.HaySiguiente() && !encontrado){
@@ -50,8 +83,7 @@ public:
                   pair<string, int>  entry(key, 1);
                   tabla[ik].push_front(entry);      
              }
-            adiLockeados[ik].unlock(); //deslockeamos el mutex
-        
+            
 
       }
       bool member(string key){
@@ -67,16 +99,16 @@ public:
 
       }
       pair<string, unsigned int> maximum(unsigned int nt){
-             /*
+             
          pthread_t thread[nt]; int tid; int i;
          int j = nt;
          i = 0;
-         while( i < TABLE_SIZE && filasLockeadas[i] != 0  && j > 0){
+         while( i < TABLE_SIZE && j > 0){
                j--;
          }
          for (tid = 0; tid < nt; ++tid){
                pthread_join(thread[tid], NULL);
-         }*/
+         }
       }
       /*
       CouncurrentHashMap count_words(string arch){}
