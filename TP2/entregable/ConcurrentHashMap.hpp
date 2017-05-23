@@ -181,6 +181,14 @@ public:
       
    
 };
+  
+  struct count_wordParams{
+    Lista<string>* archs;
+    int index;
+    int numberThreads;
+    int cantArchivos;
+    ConcurrentHashMap* hashMap;
+  };
 
 	ConcurrentHashMap count_words(string arch){
 		ConcurrentHashMap res = ConcurrentHashMap();
@@ -199,29 +207,101 @@ public:
     	return res;
 	}
 
-	void *agregarArchivoCHM(void *string){
-         
+	void *agregarArchivoCHM(void *params){
+    //casteo a puntero a parametros el argumento void
+    count_wordParams *paramsPuntero = (count_wordParams*) params;
+    //creo un iterador a la lista atomica de archivos, como se que nadie la va a estar modificando no hay problema que varios threads lean
+    Lista<string>::Iterador it = paramsPuntero->archs->CrearIt();
+    //posiciono el iterador en el primer archivo a leer (index)
+    for (int i = 0; i < paramsPuntero->index; ++i)
+    {
+        it.Avanzar();
     }
+    //por cada archivo que el thread debe procesar hago lo siguiente (archivos = todo k < cantArchivos tal que k % numberThreads = k)
+    for (int i = paramsPuntero->index; i < paramsPuntero->cantArchivos; i + paramsPuntero->numberThreads)
+    {
+      ifstream file;
+      file.open (it.Siguiente());
+      if (!file.is_open()) ;
 
-   	ConcurrentHashMap count_words(Lista<string> archs){
-   		ConcurrentHashMap res = ConcurrentHashMap();
-   		int cantArchivos = 0;
-   		for (Lista<string>::Iterador it = archs.CrearIt(); it.HaySiguiente(); it.Avanzar())
-   		{
-   			cantArchivos++;
-        }
-        pthread_t thread[cantArchivos];
-        pthread_attr_t attr;
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-   		for (Lista<string>::Iterador it = archs.CrearIt(); it.HaySiguiente(); it.Avanzar())
+      string word;
+      while (file >> word)
+      {
+          paramsPuntero->hashMap->addAndInc(word);
+      } 
+      //avanzo el iterador de archivos hasta el siguiente a procesar o que se termine la lista, en cuyo caso el proximo for va a hacer break
+      for (int j = 0; it.HaySiguiente() && j < paramsPuntero->numberThreads; i++)
+      {
+          it.Avanzar();
+      }
+
+    }
+    
+  }
+
+  ConcurrentHashMap count_words(Lista<string> archs){
+	   	ConcurrentHashMap res = ConcurrentHashMap();
+ 	  	int cantArchivos = 0;
+ 	  	for (Lista<string>::Iterador it = archs.CrearIt(); it.HaySiguiente(); it.Avanzar())
+ 	  	{
+ 	  		cantArchivos++;
+      }
+      pthread_t thread[cantArchivos];
+
+      vector<count_wordParams*> threadParams;
+      for (int i = 0; i < cantArchivos; ++i)
+      {
+        threadParams.push_back(new count_wordParams());
+      }
+      
+      pthread_attr_t attr;
+      pthread_attr_init(&attr);
+      pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+      
+   		for (int i = 0; i < cantArchivos; i++)
    		{	
+        threadParams[i]->hashMap = &res;
+        threadParams[i]->index = i;
+        threadParams[i]->cantArchivos = cantArchivos;
+        threadParams[i]->numberThreads = cantArchivos;
+        threadParams[i]->archs = &archs;
    			pthread_create(&thread[i], &attr, agregarArchivoCHM, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
-        }
+        i++;
+      }
    		return res;
-   	}
-      /*ConcurrentHashMap count words(unsigned int n, Lista<string> archs){}
-      pair<string, unsigned int> maximum(unsigned int p archivos, unsigned int p maximos, Lista<string>archs){}
+   }
+  ConcurrentHashMap count_words(unsigned int n, Lista<string> archs){
+      ConcurrentHashMap res = ConcurrentHashMap();
+      int cantArchivos = 0;
+      for (Lista<string>::Iterador it = archs.CrearIt(); it.HaySiguiente(); it.Avanzar())
+      {
+        cantArchivos++;
+      }
+      pthread_t thread[n];
+
+      vector<count_wordParams*> threadParams;
+      for (int i = 0; i < n; ++i)
+      {
+        threadParams.push_back(new count_wordParams());
+      }
+      
+      pthread_attr_t attr;
+      pthread_attr_init(&attr);
+      pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+      
+      for (int i = 0; i < n; i++)
+      { 
+        threadParams[i]->hashMap = &res;
+        threadParams[i]->index = i;
+        threadParams[i]->cantArchivos = cantArchivos;
+        threadParams[i]->numberThreads = n;
+        threadParams[i]->archs = &archs;
+        pthread_create(&thread[i], &attr, agregarArchivoCHM, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
+        i++;
+      }
+      return res;
+  }
+      /*pair<string, unsigned int> maximum(unsigned int p archivos, unsigned int p maximos, Lista<string>archs){}
       */
 
  /*
