@@ -2,8 +2,8 @@
 #include <string>
 #include <utility>
 #include <iostream>
-#include <mutex>
 #include <pthread.h>
+#include <fstream>
 #include "ListaAtomica.hpp"
 
 const int TABLE_SIZE = 26;
@@ -137,7 +137,12 @@ public:
       pair<string, unsigned int> maximum(unsigned int nt){
              
          pthread_t thread[nt]; int tid; int i;
-         maximumParams* threadParams[nt];
+         vector<maximumParams*> threadParams;
+         for (int i = 0; i < nt; ++i)
+         {
+         	threadParams.push_back(new maximumParams());
+         }
+         //maximumParams* threadParams[nt]; //inicializar punteros a struct
          int j = nt;
          pthread_attr_t attr;
          pthread_attr_init(&attr);
@@ -153,15 +158,65 @@ public:
          for (tid = 0; tid < nt; ++tid){
                pthread_join(thread[tid], NULL);
          }
+
+         pair<string, unsigned int> res;
+         res.second = 0;
+         for (int i = 0; i < nt; i++)
+         {
+         	if (res.second < (threadParams[i]->solution).second )
+         	{
+         		res.second = (threadParams[i]->solution).second;
+         		res.first = (threadParams[i]->solution).first;
+         	}
+         }
+
+         return res;
       }
-      /*
-      CouncurrentHashMap count_words(string arch){}
-      ConcurrentHashMap count words(Lista<string> archs){}
-      ConcurrentHashMap count words(unsigned int n, Lista<string> archs){}
-      pair<string, unsigned int> maximum(unsigned int p archivos, unsigned int p maximos, Lista<string>archs){}
-      */
+      
+   
 };
 
+	ConcurrentHashMap count_words(string arch){
+		ConcurrentHashMap res = ConcurrentHashMap();
+		//fijarse si al asignar por copia no hay shenanigans con la inicializacion de los mutex y cond variables
+		
+		ifstream file;
+    	file.open (arch);
+    	if (!file.is_open()) return ConcurrentHashMap();
+
+    	string word;
+    	while (file >> word)
+    	{
+        	res.addAndInc(word);
+    	}
+			
+    	return res;
+	}
+
+	void *agregarArchivoCHM(void *string){
+         
+    }
+
+   	ConcurrentHashMap count_words(Lista<string> archs){
+   		ConcurrentHashMap res = ConcurrentHashMap();
+   		int cantArchivos = 0;
+   		for (Lista<string>::Iterador it = archs.CrearIt(); it.HaySiguiente(); it.Avanzar())
+   		{
+   			cantArchivos++;
+        }
+        pthread_t thread[cantArchivos];
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+   		for (Lista<string>::Iterador it = archs.CrearIt(); it.HaySiguiente(); it.Avanzar())
+   		{	
+   			pthread_create(&thread[i], &attr, agregarArchivoCHM, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
+        }
+   		return res;
+   	}
+      /*ConcurrentHashMap count words(unsigned int n, Lista<string> archs){}
+      pair<string, unsigned int> maximum(unsigned int p archivos, unsigned int p maximos, Lista<string>archs){}
+      */
 
  /*
    int get(int key) {
