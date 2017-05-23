@@ -65,6 +65,7 @@ private:
          int j = paramsPuntero->index;
          for (j; j < TABLE_SIZE; j + paramsPuntero->numberThreads )
          {  
+            readLock(j);
             Lista< pair<string, unsigned int> >::Iterador it = tabla[j].CrearIt();
             while(it.HaySiguiente()){
                   if(it.Siguiente().second > maximo.second){ 
@@ -72,6 +73,7 @@ private:
                   }
             it.Avanzar();
             }
+            readUnlock(j);
          }
          paramsPuntero->solution = maximo;
        }
@@ -105,6 +107,7 @@ public:
 
       void addAndInc(string key){
             int ik = hash(key[0]);
+            writeLock(ik);
             Lista< pair<string, unsigned int> >::Iterador it = tabla[ik].CrearIt();
             bool encontrado = false;
             while(it.HaySiguiente() && !encontrado){
@@ -119,11 +122,13 @@ public:
                   pair<string, int>  entry(key, 1);
                   tabla[ik].push_front(entry);      
              }
+             writeUnlock(ik);
             
 
       }
       bool member(string key){
             int ik = hash(key[0]);
+            readLock(ik);
             Lista< pair<string, unsigned int> >::Iterador it = tabla[ik].CrearIt();
             while(it.HaySiguiente()){
                   if(it.Siguiente().first == key){ 
@@ -131,6 +136,7 @@ public:
                   }
             it.Avanzar();
             }
+            readUnlock(ik);
             return false;
 
       }
