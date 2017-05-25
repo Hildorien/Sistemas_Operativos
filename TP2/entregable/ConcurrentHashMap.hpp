@@ -27,7 +27,6 @@ private:
          pair<string, unsigned int> solution; 
       };
 
-       
        //Lista< pair<string, unsigned int> > tabla[TABLE_SIZE];
        pthread_mutex_t mutexLock[TABLE_SIZE];
        pthread_cond_t condVarLock[TABLE_SIZE];
@@ -125,8 +124,67 @@ private:
               }
           }   
 
-          pthread_exit(NULL);  
+          pthread_exit(NULL);
         }
+
+
+         static void *agregarArchivoCHM(void *params){
+        //casteo a puntero a parametros el argumento void
+        count_wordParams *paramsPuntero = (count_wordParams*) params;
+            //creo un iterador a la lista atomica de archivos, como se que nadie la va a estar modificando no hay problema que varios threads lean
+        Lista<string>::Iterador it = paramsPuntero->archs->CrearIt();
+        //posiciono el iterador en el primer archivo a leer (index)
+        for (int i = 0; i < paramsPuntero->index; ++i)
+        {
+            it.Avanzar();
+        }
+        //por cada archivo que el thread debe procesar hago lo siguiente (archivos = todo k < cantArchivos tal que k % numberThreads = k)
+        for (int i = paramsPuntero->index; i < paramsPuntero->cantArchivos; i + paramsPuntero->numberThreads)
+        {
+          ifstream file;
+          file.open (it.Siguiente());
+           if (!file.is_open()) ;
+  
+           string word;
+           while (file >> word)
+           {
+               paramsPuntero->hashMap->addAndInc(word);
+           } 
+           //avanzo el iterador de archivos hasta el siguiente a procesar o que se termine la lista, en cuyo caso el proximo for va a hacer break
+           for (int j = 0; it.HaySiguiente() && j < paramsPuntero->numberThreads; i++)
+           {
+               it.Avanzar();
+           }
+  
+         }
+         pthread_exit(NULL);
+        
+      }
+
+      static void *agregarArchivoMaximum(void *params){
+         count_wordParams *paramsPuntero = (count_wordParams*) params;
+         Lista<string>* archs = paramsPuntero->archs;
+         int index = paramsPuntero->index;
+         int numberThreads = paramsPuntero->numberThreads;
+         int cantArchivos = paramsPuntero->cantArchivos;
+         ConcurrentHashMap** hashMaps = paramsPuntero->hashMaps;
+
+        for (int i = index; i < cantArchivos; i+numberThreads)
+        {
+           int j = 0;
+           for (Lista<string>::Iterador it = archs->CrearIt(); it.HaySiguiente(); it.Avanzar())
+           {
+            if (i==j) {
+              *hashMaps[i] = hashMaps[i]->count_words(it.Siguiente());
+              break;
+            }
+            j++;
+           }
+           
+         }
+         pthread_exit(NULL);
+        }
+
 
 public:
 

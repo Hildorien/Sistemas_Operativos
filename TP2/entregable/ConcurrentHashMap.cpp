@@ -2,79 +2,6 @@
 
 using namespace std;
 
-  struct count_wordParams{
-      Lista<string>* archs;
-      int index;
-      int numberThreads;
-      int cantArchivos;
-      ConcurrentHashMap* hashMap;
-      ConcurrentHashMap** hashMaps;
-      };
-      struct maximumParams{
-         ConcurrentHashMap *context;
-         int index;
-         int numberThreads;
-         pair<string, unsigned int> solution; 
-      };
-
-      static void *agregarArchivoCHM(void *params){
-        //casteo a puntero a parametros el argumento void
-        count_wordParams *paramsPuntero = (count_wordParams*) params;
-            //creo un iterador a la lista atomica de archivos, como se que nadie la va a estar modificando no hay problema que varios threads lean
-        Lista<string>::Iterador it = paramsPuntero->archs->CrearIt();
-        //posiciono el iterador en el primer archivo a leer (index)
-        for (int i = 0; i < paramsPuntero->index; ++i)
-        {
-            it.Avanzar();
-        }
-        //por cada archivo que el thread debe procesar hago lo siguiente (archivos = todo k < cantArchivos tal que k % numberThreads = k)
-        for (int i = paramsPuntero->index; i < paramsPuntero->cantArchivos; i + paramsPuntero->numberThreads)
-        {
-          ifstream file;
-          file.open (it.Siguiente());
-           if (!file.is_open()) ;
-  
-           string word;
-           while (file >> word)
-           {
-               paramsPuntero->hashMap->addAndInc(word);
-           } 
-           //avanzo el iterador de archivos hasta el siguiente a procesar o que se termine la lista, en cuyo caso el proximo for va a hacer break
-           for (int j = 0; it.HaySiguiente() && j < paramsPuntero->numberThreads; i++)
-           {
-               it.Avanzar();
-           }
-  
-         }
-         pthread_exit(NULL);
-        
-      }
-
-      static void *agregarArchivoMaximum(void *params){
-         count_wordParams *paramsPuntero = (count_wordParams*) params;
-         Lista<string>* archs = paramsPuntero->archs;
-         int index = paramsPuntero->index;
-         int numberThreads = paramsPuntero->numberThreads;
-         int cantArchivos = paramsPuntero->cantArchivos;
-         ConcurrentHashMap** hashMaps = paramsPuntero->hashMaps;
-
-        for (int i = index; i < cantArchivos; i+numberThreads)
-        {
-           int j = 0;
-           for (Lista<string>::Iterador it = archs->CrearIt(); it.HaySiguiente(); it.Avanzar())
-           {
-            if (i==j) {
-              *hashMaps[i] = hashMaps[i]->count_words(it.Siguiente());
-              break;
-            }
-            j++;
-           }
-           
-         }
-         pthread_exit(NULL);
-        }
-
-
       ConcurrentHashMap::ConcurrentHashMap(){
             tabla.resize(TABLE_SIZE); // El hash va a tener size 26
             for (int i = 0; i < TABLE_SIZE; i++){
@@ -101,10 +28,15 @@ using namespace std;
       }
 
       void ConcurrentHashMap::addAndInc(string key){
+            cout << "Entre a addandInc " << endl;
             int ik = hash(key[0]);
+            cout << "realize el hash y su valor es "  << ik << endl;
             writeLock(ik);
+            cout << "puse un lock al hash" << endl;
             Lista< pair<string, unsigned int> >::Iterador it = tabla[ik]->CrearIt();
+            cout << "cree el iterador" << endl;
             bool encontrado = false;
+            cout << "Inicialize cosas " << endl;
             while(it.HaySiguiente() && !encontrado){
                   if(it.Siguiente().first == key){ 
                         it.Siguiente().second++;
@@ -112,15 +44,15 @@ using namespace std;
                   }
             it.Avanzar();
             }
-            
+            cout << "Sali del ciclo y encontrado es" << encontrado << endl;
             if(encontrado == false){
                   pair<string, int>  entry(key, 1);
                   tabla[ik]->push_front(entry);      
              }
              writeUnlock(ik);
-            
-
+          
       }
+
       bool ConcurrentHashMap::member(string key){
             int ik = hash(key[0]);
             readLock(ik);
@@ -135,6 +67,7 @@ using namespace std;
             return false;
 
       }
+
       pair<string, unsigned int> ConcurrentHashMap::maximum(unsigned int nt){
              
          pthread_t thread[nt]; int tid; int i;
@@ -176,19 +109,22 @@ using namespace std;
       }
       
    ConcurrentHashMap ConcurrentHashMap::count_words(string arch){
+    
+    cout << "Entro a la funcion " << endl;
     ConcurrentHashMap res = ConcurrentHashMap();
     //fijarse si al asignar por copia no hay shenanigans con la inicializacion de los mutex y cond variables
-    
+    cout << "Creo un hashmap " << endl;
     ifstream file;
       file.open (arch);
       if (!file.is_open()) return ConcurrentHashMap();
 
       string word;
+      cout << "va a ejecutar addandInc " << endl;
       while (file >> word)
       {
           res.addAndInc(word);
       }
-      
+      cout << "Realizo el addandInc " << endl;
       return res;
   }
 
@@ -289,7 +225,7 @@ using namespace std;
         pthread_attr_destroy(&attr);
          
 
-        return (*hashArray)->maximum(p_maximos); //devuelvo el maximo del primer hashmap*/
+        return (*hashArray)->maximum(p_maximos); //devuelvo el maximo del primer hashmap
    }
 
    pair<string, unsigned int> ConcurrentHashMap::maximum(Lista<string> archs){
@@ -297,3 +233,8 @@ using namespace std;
       res = res.count_words(archs);
       return res.maximum(26);
    }
+
+ /*  int main() {
+    cout << "Hola" << endl;
+    return 0;
+   }*/
