@@ -4,7 +4,7 @@
 
 CXX = g++
 CXXFLAGS = -std=c++11
-LDLIBS = -lpthread
+LDLIBS = -pthread -lpthread
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) -c $<
