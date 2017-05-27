@@ -4,6 +4,7 @@
 #include <iostream>
 #include <pthread.h>
 #include <fstream>
+#include <list>
 #include "ListaAtomica.hpp"
 
 const int TABLE_SIZE = 26;
@@ -13,7 +14,7 @@ class ConcurrentHashMap {
 private:
 
     struct count_wordParams{
-      Lista<string>* archs;
+      list<string>* archs;
       int index;
       int numberThreads;
       int cantArchivos;
@@ -62,7 +63,7 @@ private:
          pthread_mutex_lock(&mutexLock[i]);
          writer[i] = false;
          pthread_cond_signal(&condVarLock[i]);
-         pthread_mutex_lock(&mutexLock[i]);
+         pthread_mutex_unlock(&mutexLock[i]);
        }
 
        void *getMaximumFromRows(void *params){
@@ -70,7 +71,7 @@ private:
          pair<string, unsigned int> maximo;
          maximo.second = 0;
          int j = paramsPuntero->index;
-         for (j; j < TABLE_SIZE; j + paramsPuntero->numberThreads )
+         while(j < TABLE_SIZE)
          {  
             readLock(j);
             Lista< pair<string, unsigned int> >::Iterador it = tabla[j]->CrearIt();
@@ -81,6 +82,7 @@ private:
             it.Avanzar();
             }
             readUnlock(j);
+            j+= paramsPuntero->numberThreads; 
          }
          paramsPuntero->solution = maximo;
        }
@@ -115,15 +117,15 @@ private:
           int numberThreads = paramsPuntero->numberThreads;
           int cantHashMaps = paramsPuntero->cantArchivos;
           ConcurrentHashMap** hashMaps = paramsPuntero->hashMaps; 
-
-          for (int i = index; i < cantHashMaps; i + numberThreads)
+          int i = index;
+          while(i < cantHashMaps)
           {
               if (i != 0)
               {
                 hashMaps[i]->copiarCHashMap(hashMaps[0]);
               }
-          }   
-
+              i += numberThreads;
+          } 
           pthread_exit(NULL);
         }
 
@@ -132,18 +134,21 @@ private:
         //casteo a puntero a parametros el argumento void
         count_wordParams *paramsPuntero = (count_wordParams*) params;
             //creo un iterador a la lista atomica de archivos, como se que nadie la va a estar modificando no hay problema que varios threads lean
-        Lista<string>::Iterador it = paramsPuntero->archs->CrearIt();
+        list<string>::iterator it = paramsPuntero->archs->begin();
         //posiciono el iterador en el primer archivo a leer (index)
-        for (int i = 0; i < paramsPuntero->index; ++i)
+        for (int i = 0; i < paramsPuntero->index; i++)
         {
-            it.Avanzar();
+            it++;
         }
         //por cada archivo que el thread debe procesar hago lo siguiente (archivos = todo k < cantArchivos tal que k % numberThreads = k)
-        for (int i = paramsPuntero->index; i < paramsPuntero->cantArchivos; i + paramsPuntero->numberThreads)
+        //cout << paramsPuntero->index << " " << paramsPuntero->cantArchivos << " " << paramsPuntero->numberThreads << endl;
+        int i = paramsPuntero->index;
+
+        while(i < paramsPuntero->cantArchivos)
         {
           ifstream file;
-          file.open (it.Siguiente());
-           if (!file.is_open()) ;
+          file.open (*it);
+           if (!file.is_open()) cout << *it << endl;
   
            string word;
            while (file >> word)
@@ -151,38 +156,44 @@ private:
                paramsPuntero->hashMap->addAndInc(word);
            } 
            //avanzo el iterador de archivos hasta el siguiente a procesar o que se termine la lista, en cuyo caso el proximo for va a hacer break
-           for (int j = 0; it.HaySiguiente() && j < paramsPuntero->numberThreads; i++)
+           //cout << "Prox Arch" << endl;
+           for (int j = 0; j < paramsPuntero->numberThreads && it != paramsPuntero->archs->end(); j++)
            {
-               it.Avanzar();
+               it++;
            }
-  
+           //cout << "Tengo PA" << endl;
+          file.close();
+          i += paramsPuntero->numberThreads;
+          
          }
+
          pthread_exit(NULL);
         
       }
 
       static void *agregarArchivoMaximum(void *params){
          count_wordParams *paramsPuntero = (count_wordParams*) params;
-         Lista<string>* archs = paramsPuntero->archs;
+         list<string>* archs = paramsPuntero->archs;
          int index = paramsPuntero->index;
          int numberThreads = paramsPuntero->numberThreads;
          int cantArchivos = paramsPuntero->cantArchivos;
          ConcurrentHashMap** hashMaps = paramsPuntero->hashMaps;
-
-        for (int i = index; i < cantArchivos; i+numberThreads)
+         int i = index;
+        while( i < cantArchivos)
         {
            int j = 0;
-           for (Lista<string>::Iterador it = archs->CrearIt(); it.HaySiguiente(); it.Avanzar())
+           for (list<string>::iterator it = archs->begin(); it != archs->end(); it++)
            {
             if (i==j) {
-              *hashMaps[i] = hashMaps[i]->count_words(it.Siguiente());
+              *hashMaps[i] = hashMaps[i]->count_words(*it);
               break;
             }
             j++;
            }
-           
+          i += numberThreads; 
          }
          pthread_exit(NULL);
+
         }
 
 
@@ -195,10 +206,10 @@ public:
   void addAndInc(string key);
   bool member(string key);
   pair<string, unsigned int> maximum(unsigned int nt); 
-  ConcurrentHashMap count_words(string arch);
-  ConcurrentHashMap count_words(unsigned int n, Lista<string>&  archs);
-  ConcurrentHashMap count_words(Lista<string>& archs);
-  pair<string, unsigned int> maximum(unsigned int p_archivos, unsigned int p_maximos, Lista<string> archs); 
-  pair<string, unsigned int> maximum(Lista<string> archs);
+  static ConcurrentHashMap& count_words(string arch);
+  static ConcurrentHashMap& count_words(unsigned int n, list<string> archs);
+  static ConcurrentHashMap& count_words(list<string>& archs);
+  static pair<string, unsigned int> maximum(unsigned int p_archivos, unsigned int p_maximos, list<string> archs); 
+  static pair<string, unsigned int> maximum(list<string> archs);
       
 };
