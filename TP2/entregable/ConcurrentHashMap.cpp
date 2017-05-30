@@ -171,13 +171,19 @@ using namespace std;
    pair<string, unsigned int> ConcurrentHashMap::maximum(unsigned int p_archivos, unsigned int p_maximos, list<string> archs){
         int cantArchivos = archs.size();
         ConcurrentHashMap* hashArray[cantArchivos];
+
         for (int i = 0; i < cantArchivos; ++i)
         {
           hashArray[i] = new ConcurrentHashMap();
         }
-        pthread_t thread[p_archivos];
+
+        int maxThreads = p_archivos;
+        if (maxThreads < p_maximos){
+          maxThreads = p_maximos;
+        }
+        pthread_t thread[maxThreads];
         vector<count_wordParams*> threadParams;
-        for (int i = 0; i < p_archivos; ++i)
+        for (int i = 0; i < maxThreads; ++i)
         {
           threadParams.push_back(new count_wordParams());
         }
@@ -204,11 +210,7 @@ using namespace std;
         }
         int numeroHashmap = 1;
 
-       /* for (int i = 0; i < p_maximos -1 ; i++) // deberia alocarle espacio a threadparams ya que su tam es p_archivos y ahora quiero que sea p_maximo.
-        {
-          threadParams.push_back(new count_wordParams());
-        }*/
-
+    
         for (int i = 0 ; i < p_maximos; i++) // i deberia ir desde p_archivos??
         { 
           threadParams[i]->hashMaps = hashArray;
