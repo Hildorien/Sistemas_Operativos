@@ -149,7 +149,7 @@ private:
         count_wordParams *paramsPuntero = (count_wordParams*) params;
             //creo un iterador a la lista atomica de archivos, como se que nadie la va a estar modificando no hay problema que varios threads lean
         list<string>::iterator it = paramsPuntero->archs->begin();
-        int ultimoArchivoProcesado = -1;
+        int ultimoArchivoProcesado = 0;
         //por cada archivo que el thread debe procesar hago lo siguiente (archivos = todo k < cantArchivos tal que k % numberThreads = k)
         //cout << paramsPuntero->index << " " << paramsPuntero->cantArchivos << " " << paramsPuntero->numberThreads << endl;
         pthread_mutex_lock(paramsPuntero->mutex);
@@ -159,7 +159,7 @@ private:
           *(paramsPuntero->numeroArchivo) = archivoProcesar + 1;
           pthread_mutex_unlock(paramsPuntero->mutex);
         
-          while(ultimoArchivoProcesado != -1 && ultimoArchivoProcesado<archivoProcesar)
+          while(ultimoArchivoProcesado<archivoProcesar)
           {
             ultimoArchivoProcesado++;
             it++;
@@ -193,7 +193,7 @@ private:
          list<string>::iterator it = archs->begin();
          int* numeroArchivo = paramsPuntero->numeroArchivo;
          pthread_mutex_t* mutex = paramsPuntero->mutex;
-         int ultimoArchivoProcesado = -1;
+         int ultimoArchivoProcesado = 0;
 
         pthread_mutex_lock(mutex); 
         while( *numeroArchivo < archs->size())
@@ -202,7 +202,7 @@ private:
           *numeroArchivo = archivoProcesar + 1;
           pthread_mutex_unlock(mutex);
 
-          while(ultimoArchivoProcesado != -1 && ultimoArchivoProcesado<archivoProcesar)
+          while(ultimoArchivoProcesado<archivoProcesar)
           {
             ultimoArchivoProcesado++;
             it++;
