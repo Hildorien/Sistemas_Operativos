@@ -18,9 +18,12 @@ private:
       int index;
       int numberThreads;
       int cantArchivos;
+      pthread_mutex_t* mutex;
+      int* numeroArchivo;
       ConcurrentHashMap* hashMap;
       ConcurrentHashMap** hashMaps;
       };
+
       struct maximumParams{
          ConcurrentHashMap *context;
          pthread_mutex_t* mutex;
@@ -120,19 +123,23 @@ private:
 
         static void *mergearCHashMap(void *params){
           count_wordParams *paramsPuntero = (count_wordParams*) params;
-          int index = paramsPuntero->index;
-          int numberThreads = paramsPuntero->numberThreads;
-          int cantHashMaps = paramsPuntero->cantArchivos;
           ConcurrentHashMap** hashMaps = paramsPuntero->hashMaps; 
-          int i = index;
-          while(i < cantHashMaps)
-          {
-              if (i != 0)
-              {
-                hashMaps[i]->copiarCHashMap(hashMaps[0]);
-              }
-              i += numberThreads;
+          int cantHashMaps = paramsPuntero->cantArchivos;
+          
+          pthread_mutex_t* mutex = paramsPuntero->mutex;
+          int* numeroHashmap = paramsPuntero->numeroArchivo;
+
+          pthread_mutex_lock(mutex);
+          while(*numeroHashmap < cantHashMaps)
+          {    
+             int hashMapProcesar = *numeroHashmap;
+             *numeroHashmap = hashMapProcesar + 1;
+             pthread_mutex_unlock(mutex);
+
+             hashMaps[hashMapProcesar]->copiarCHashMap(hashMaps[0]);
+            pthread_mutex_lock(mutex);
           } 
+          pthread_mutex_unlock(mutex);
           pthread_exit(NULL);
         }
 
@@ -142,17 +149,22 @@ private:
         count_wordParams *paramsPuntero = (count_wordParams*) params;
             //creo un iterador a la lista atomica de archivos, como se que nadie la va a estar modificando no hay problema que varios threads lean
         list<string>::iterator it = paramsPuntero->archs->begin();
-        //posiciono el iterador en el primer archivo a leer (index)
-        for (int i = 0; i < paramsPuntero->index; i++)
-        {
-            it++;
-        }
+        int ultimoArchivoProcesado = -1;
         //por cada archivo que el thread debe procesar hago lo siguiente (archivos = todo k < cantArchivos tal que k % numberThreads = k)
         //cout << paramsPuntero->index << " " << paramsPuntero->cantArchivos << " " << paramsPuntero->numberThreads << endl;
-        int i = paramsPuntero->index;
-
-        while(i < paramsPuntero->cantArchivos)
+        pthread_mutex_lock(paramsPuntero->mutex);
+        while(*(paramsPuntero->numeroArchivo) < paramsPuntero->archs->size())
         {
+          int archivoProcesar = *(paramsPuntero->numeroArchivo);
+          *(paramsPuntero->numeroArchivo) = archivoProcesar + 1;
+          pthread_mutex_unlock(paramsPuntero->mutex);
+        
+          while(ultimoArchivoProcesado != -1 && ultimoArchivoProcesado<archivoProcesar)
+          {
+            ultimoArchivoProcesado++;
+            it++;
+          }
+
           ifstream file;
           file.open (*it);
            if (!file.is_open()) cout << *it << endl;
@@ -162,17 +174,12 @@ private:
            {
                paramsPuntero->hashMap->addAndInc(word);
            } 
-           //avanzo el iterador de archivos hasta el siguiente a procesar o que se termine la lista, en cuyo caso el proximo for va a hacer break
-           //cout << "Prox Arch" << endl;
-           for (int j = 0; j < paramsPuntero->numberThreads && it != paramsPuntero->archs->end(); j++)
-           {
-               it++;
-           }
-           //cout << "Tengo PA" << endl;
-          file.close();
-          i += paramsPuntero->numberThreads;
           
+          file.close();  
+          pthread_mutex_lock(paramsPuntero->mutex);        
          }
+         pthread_mutex_unlock(paramsPuntero->mutex);
+        
 
          pthread_exit(NULL);
         
@@ -181,24 +188,31 @@ private:
       static void *agregarArchivoMaximum(void *params){
          count_wordParams *paramsPuntero = (count_wordParams*) params;
          list<string>* archs = paramsPuntero->archs;
-         int index = paramsPuntero->index;
-         int numberThreads = paramsPuntero->numberThreads;
-         int cantArchivos = paramsPuntero->cantArchivos;
          ConcurrentHashMap** hashMaps = paramsPuntero->hashMaps;
-         int i = index;
-        while( i < cantArchivos)
+         
+         list<string>::iterator it = archs->begin();
+         int* numeroArchivo = paramsPuntero->numeroArchivo;
+         pthread_mutex_t* mutex = paramsPuntero->mutex;
+         int ultimoArchivoProcesado = -1;
+
+        pthread_mutex_lock(mutex); 
+        while( *numeroArchivo < archs->size())
         {
-           int j = 0;
-           for (list<string>::iterator it = archs->begin(); it != archs->end(); it++)
-           {
-            if (i==j) {
-              *hashMaps[i] = hashMaps[i]->count_words(*it);
-              break;
-            }
-            j++;
-           }
-          i += numberThreads; 
-         }
+          int archivoProcesar = *numeroArchivo;
+          *numeroArchivo = archivoProcesar + 1;
+          pthread_mutex_unlock(mutex);
+
+          while(ultimoArchivoProcesado != -1 && ultimoArchivoProcesado<archivoProcesar)
+          {
+            ultimoArchivoProcesado++;
+            it++;
+          }
+          
+          *hashMaps[archivoProcesar] = hashMaps[archivoProcesar]->count_words(*it);
+           pthread_mutex_lock(mutex); 
+        
+        }
+        pthread_mutex_unlock(mutex);
          pthread_exit(NULL);
 
         }
