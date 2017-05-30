@@ -219,15 +219,14 @@ using namespace std;
           threadParams[i]->cantArchivos = cantArchivos;
           pthread_create(&thread[i], &attr, mergearCHashMap, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
         }
-        cout << "creo threads para mergear los hash map" << endl;
+
         
         for (int tid = 0; tid < p_maximos; ++tid){
                pthread_join(thread[tid], NULL);
         }
-        cout << "creo los joineo" << endl;
+
         pthread_attr_destroy(&attr);
         pthread_mutex_destroy(&mutex);
-         cout << "los destruyo" << endl;
 
         return (*hashArray)->maximum(p_maximos); //devuelvo el maximo del primer hashmap
    }
