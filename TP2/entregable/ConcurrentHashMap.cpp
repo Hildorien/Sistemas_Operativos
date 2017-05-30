@@ -170,19 +170,18 @@ using namespace std;
 
    pair<string, unsigned int> ConcurrentHashMap::maximum(unsigned int p_archivos, unsigned int p_maximos, list<string> archs){
         int cantArchivos = archs.size();
-
         ConcurrentHashMap* hashArray[cantArchivos];
         for (int i = 0; i < cantArchivos; ++i)
         {
           hashArray[i] = new ConcurrentHashMap();
         }
         pthread_t thread[p_archivos];
-
         vector<count_wordParams*> threadParams;
         for (int i = 0; i < p_archivos; ++i)
         {
           threadParams.push_back(new count_wordParams());
         }
+
         pthread_attr_t attr;
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -203,10 +202,14 @@ using namespace std;
         for (int tid = 0; tid < p_archivos; ++tid){
                pthread_join(thread[tid], NULL);
         }
-
         int numeroHashmap = 1;
 
-        for (int i = 0; i < p_maximos; i++)
+       /* for (int i = 0; i < p_maximos -1 ; i++) // deberia alocarle espacio a threadparams ya que su tam es p_archivos y ahora quiero que sea p_maximo.
+        {
+          threadParams.push_back(new count_wordParams());
+        }*/
+
+        for (int i = 0 ; i < p_maximos; i++) // i deberia ir desde p_archivos??
         { 
           threadParams[i]->hashMaps = hashArray;
           threadParams[i]->mutex = &mutex;
@@ -214,11 +217,15 @@ using namespace std;
           threadParams[i]->cantArchivos = cantArchivos;
           pthread_create(&thread[i], &attr, mergearCHashMap, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
         }
+        cout << "creo threads para mergear los hash map" << endl;
+        
         for (int tid = 0; tid < p_maximos; ++tid){
                pthread_join(thread[tid], NULL);
         }
+        cout << "creo los joineo" << endl;
         pthread_attr_destroy(&attr);
         pthread_mutex_destroy(&mutex);
+         cout << "los destruyo" << endl;
 
         return (*hashArray)->maximum(p_maximos); //devuelvo el maximo del primer hashmap
    }
