@@ -23,8 +23,8 @@ private:
       };
       struct maximumParams{
          ConcurrentHashMap *context;
-         int index;
-         int numberThreads;
+         pthread_mutex_t* mutex;
+         int* numeroLista;
          pair<string, unsigned int> solution; 
       };
 
@@ -70,20 +70,27 @@ private:
          maximumParams *paramsPuntero = (maximumParams*) params;
          pair<string, unsigned int> maximo;
          maximo.second = 0;
-         int j = paramsPuntero->index;
-         while(j < TABLE_SIZE)
-         {  
-            readLock(j);
-            Lista< pair<string, unsigned int> >::Iterador it = tabla[j]->CrearIt();
+
+         pthread_mutex_lock(paramsPuntero->mutex);
+         while (*(paramsPuntero->numeroLista) < 26) {
+            int filaALeer = *(paramsPuntero->numeroLista);
+           *(paramsPuntero->numeroLista) = filaALeer + 1;
+            pthread_mutex_unlock(paramsPuntero->mutex);
+
+            readLock(filaALeer);
+            Lista< pair<string, unsigned int> >::Iterador it = tabla[filaALeer]->CrearIt();
             while(it.HaySiguiente()){
                   if(it.Siguiente().second > maximo.second){ 
                    maximo = it.Siguiente();
                   }
             it.Avanzar();
             }
-            readUnlock(j);
-            j+= paramsPuntero->numberThreads; 
+            readUnlock(filaALeer);
+
+            pthread_mutex_lock(paramsPuntero->mutex);
          }
+         pthread_mutex_unlock(paramsPuntero->mutex);
+         
          paramsPuntero->solution = maximo;
        }
 

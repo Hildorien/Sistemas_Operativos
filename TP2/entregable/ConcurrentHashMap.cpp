@@ -71,15 +71,19 @@ using namespace std;
          }
          //maximumParams* threadParams[nt]; //inicializar punteros a struct
          int j = nt;
+
+         int numeroLista = 0;
+         pthread_mutex_t mutex;
+         pthread_mutex_init(&mutex, NULL);
+
          pthread_attr_t attr;
          pthread_attr_init(&attr);
          pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
          for (i = 0; i < nt; i++)
          {
-            threadParams[i] = new maximumParams();
-            threadParams[i]->context = this;
-            threadParams[i]->index = i;
-            threadParams[i]->numberThreads = nt; 
+            threadParams[i]->context = this; 
+            threadParams[i]->mutex = &mutex;
+            threadParams[i]->numeroLista = &numeroLista;
             pthread_create(&thread[i], &attr, getMaximumFromRowsHelper, (void *)threadParams[i]);
          }
          for (tid = 0; tid < nt; ++tid){
@@ -203,12 +207,6 @@ using namespace std;
         }
         pthread_attr_destroy(&attr);
 
-  //       for (int i = 0; i < 26; i++) {
-		// 	for (auto it = (*hashArray)->tabla[i]->CrearIt(); it.HaySiguiente(); it.Avanzar()) {
-		// 		auto t = it.Siguiente();
-		// 		cout << t.first << " " << t.second << endl;
-		// 	}
-		// }
 
         return (*hashArray)->maximum(p_maximos); //devuelvo el maximo del primer hashmap
    }
@@ -218,8 +216,3 @@ using namespace std;
       res = res.count_words(archs);
       return res.maximum(26);
    }
-
- /*  int main() {
-    cout << "Hola" << endl;
-    return 0;
-   }*/
