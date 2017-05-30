@@ -199,11 +199,12 @@ using namespace std;
           threadParams[i]->archs = &archs;
           pthread_create(&thread[i], &attr, agregarArchivoMaximum, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
         }
+
         for (int tid = 0; tid < p_archivos; ++tid){
                pthread_join(thread[tid], NULL);
         }
 
-        int numeroHashmap = 0;
+        int numeroHashmap = 1;
 
         for (int i = 0; i < p_maximos; i++)
         { 
