@@ -218,7 +218,11 @@ using namespace std;
         pthread_attr_destroy(&attr);
         pthread_mutex_destroy(&mutex);
         delete(threadParams);
-        return (*hashArray)->maximum(p_maximos); //devuelvo el maximo del primer hashmap
+        pair<string, unsigned int> res = (*hashArray)->maximum(p_maximos);
+        for (int i = 0; i < cantArchivos; i++){
+            delete(hashArray[i]);
+        }
+        return res; //devuelvo el maximo del primer hashmap
    }
 
    pair<string, unsigned int> ConcurrentHashMap::maximum(list<string> archs){
