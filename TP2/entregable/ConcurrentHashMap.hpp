@@ -15,8 +15,6 @@ private:
 
     struct count_wordParams{
       list<string>* archs;
-      int index;
-      int numberThreads;
       int cantArchivos;
       pthread_mutex_t* mutex;
       int* numeroArchivo;
@@ -50,7 +48,7 @@ private:
          pthread_mutex_lock(&mutexLock[i]);
          currentReaders[i]--;
          if (currentReaders[i] == 0)
-            pthread_cond_signal(&condVarLock[i]);
+            pthread_cond_broadcast(&condVarLock[i]);
          pthread_mutex_unlock(&mutexLock[i]);
        }
 
@@ -65,7 +63,7 @@ private:
        void writeUnlock(int i){
          pthread_mutex_lock(&mutexLock[i]);
          writer[i] = false;
-         pthread_cond_signal(&condVarLock[i]);
+         pthread_cond_broadcast(&condVarLock[i]);
          pthread_mutex_unlock(&mutexLock[i]);
        }
 

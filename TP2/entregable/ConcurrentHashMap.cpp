@@ -101,6 +101,7 @@ using namespace std;
             res.second = (threadParams[i]->solution).second;
             res.first = (threadParams[i]->solution).first;
           }
+          delete(threadParams[i]);
          }
 
          return res;
@@ -128,11 +129,7 @@ using namespace std;
       
       pthread_t thread[n];
 
-      vector<count_wordParams*> threadParams;
-      for (int i = 0; i < n; ++i)
-      {
-        threadParams.push_back(new count_wordParams());
-      }
+      count_wordParams* threadParams = new count_wordParams();
       
       pthread_attr_t attr;
       pthread_attr_init(&attr);
@@ -141,14 +138,15 @@ using namespace std;
       int numeroArchivo = 0;
       pthread_mutex_t mutex;
       pthread_mutex_init(&mutex, NULL);
-      
+
+      threadParams->hashMap = res;
+      threadParams->mutex = &mutex;
+      threadParams->numeroArchivo = &numeroArchivo;
+      threadParams->archs = &archs;
+        
       for (int i = 0; i < n; i++)
       { 
-        threadParams[i]->hashMap = res;
-        threadParams[i]->mutex = &mutex;
-        threadParams[i]->numeroArchivo = &numeroArchivo;
-        threadParams[i]->archs = &archs;
-        pthread_create(&thread[i], &attr, agregarArchivoCHM, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
+        pthread_create(&thread[i], &attr, agregarArchivoCHM, (void *)threadParams); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
       }
 
       for (int tid = 0; tid < n; ++tid){
@@ -156,8 +154,7 @@ using namespace std;
       }
       pthread_attr_destroy(&attr);
       pthread_mutex_destroy(&mutex);
-      
-
+      delete(threadParams);
       return *res;
   }
 
@@ -182,11 +179,7 @@ using namespace std;
           maxThreads = p_maximos;
         }
         pthread_t thread[maxThreads];
-        vector<count_wordParams*> threadParams;
-        for (int i = 0; i < maxThreads; ++i)
-        {
-          threadParams.push_back(new count_wordParams());
-        }
+        count_wordParams* threadParams = new count_wordParams();
 
         pthread_attr_t attr;
         pthread_attr_init(&attr);
@@ -195,29 +188,26 @@ using namespace std;
         int numeroArchivo = 0;
         pthread_mutex_t mutex;
         pthread_mutex_init(&mutex, NULL);
-      
+        threadParams->hashMaps = hashArray;
+        threadParams->mutex = &mutex;
+        threadParams->numeroArchivo = &numeroArchivo;
+        threadParams->archs = &archs;
+          
         for (int i = 0; i < p_archivos; i++)
         { 
-          threadParams[i]->hashMaps = hashArray;
-          threadParams[i]->mutex = &mutex;
-          threadParams[i]->numeroArchivo = &numeroArchivo;
-          threadParams[i]->archs = &archs;
-          pthread_create(&thread[i], &attr, agregarArchivoMaximum, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
+          pthread_create(&thread[i], &attr, agregarArchivoMaximum, (void *)threadParams); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
         }
 
         for (int tid = 0; tid < p_archivos; ++tid){
                pthread_join(thread[tid], NULL);
         }
         int numeroHashmap = 1;
-
+        threadParams->numeroArchivo = &numeroHashmap;
+        threadParams->cantArchivos = cantArchivos;  
     
-        for (int i = 0 ; i < p_maximos; i++) // i deberia ir desde p_archivos??
+        for (int i = 0 ; i < p_maximos; i++) 
         { 
-          threadParams[i]->hashMaps = hashArray;
-          threadParams[i]->mutex = &mutex;
-          threadParams[i]->numeroArchivo = &numeroHashmap;
-          threadParams[i]->cantArchivos = cantArchivos;
-          pthread_create(&thread[i], &attr, mergearCHashMap, (void *)threadParams[i]); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
+          pthread_create(&thread[i], &attr, mergearCHashMap, (void *)threadParams); //mandar como parametros concurrenthashmap POR REFERENCIA, y el pathname
         }
 
         
@@ -227,7 +217,7 @@ using namespace std;
 
         pthread_attr_destroy(&attr);
         pthread_mutex_destroy(&mutex);
-
+        delete(threadParams);
         return (*hashArray)->maximum(p_maximos); //devuelvo el maximo del primer hashmap
    }
 
