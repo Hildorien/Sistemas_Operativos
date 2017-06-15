@@ -6,6 +6,7 @@
 #include <list>
 #include <iostream>
 #include <sstream>
+#include <queue>
 #include "consola.hpp"
 #include "HashMap.hpp"
 #include "mpi.h"
@@ -20,12 +21,44 @@ using namespace std;
 #define CMD_SQUIT   "q"
 
 static unsigned int np;
+/*		  Tag = 1 ==> load()
+		  Tag = 2 ==> addAndInc()
+		  Tag = 3 ==> member()
+		  Tag = 4 ==> Maximum()
+		  Tag = 5 ==> Quit()
+		  Tag = 99 ==> Respuesta de Nodo
+*/
+
+       int MPI_Bsend(
+               void *buf,
+               int count,
+               MPI_Datatype datatype,
+               int dest,
+               int tag,
+               MPI_Comm comm )
+
+
+
+
 
 // Crea un ConcurrentHashMap distribuido
 static void load(list<string> params) {
 
     for (list<string>::iterator it=params.begin(); it != params.end(); ++it) {
        // TODO: Implementar
+    	if ( np < params.size() ){ // Si tengo mas archivos que nodos voy a tener que usar una cola de nodos libres para reasignarles archivos y usar un recieved bloqueante que se quede esperando a un nodo que termine 
+    	
+
+    	} else { // Si no , bueno es un simple send y recieved no bloqueante 
+
+    	}
+
+
+
+
+    	MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
+
+
     }
 
     cout << "La listá esta procesada" << endl;
