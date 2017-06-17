@@ -48,15 +48,16 @@ using namespace std;
 
       bool ConcurrentHashMap::member(string key){
             int ik = hash(key[0]);
-            readLock(ik);
+            //readLock(ik); 
             Lista< pair<string, unsigned int> >::Iterador it = tabla[ik]->CrearIt();
             while(it.HaySiguiente()){
                   if(it.Siguiente().first == key){ 
+                  //readUnlock(ik);
                   return true;  
                   }
             it.Avanzar();
             }
-            readUnlock(ik);
+            //readUnlock(ik);
             return false;
 
       }

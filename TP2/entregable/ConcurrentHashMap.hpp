@@ -33,7 +33,7 @@ private:
        pthread_mutex_t mutexLock[TABLE_SIZE];
        pthread_cond_t condVarLock[TABLE_SIZE];
 
-       int currentReaders[TABLE_SIZE]; //Almacena el numero de maximums que estan en simultaneo leyendo una lista
+       int currentReaders[TABLE_SIZE]; //Almacena el numero de maximums/members que estan en simultaneo leyendo una lista
        bool writer[TABLE_SIZE]; //Almacena un bool que dice si hay un thread escribiendo en la lista
 
        void readLock(int i){
@@ -170,7 +170,9 @@ private:
            string word;
            while (file >> word)
            {
+    
                paramsPuntero->hashMap->addAndInc(word);
+            
            } 
           
           file.close();  
