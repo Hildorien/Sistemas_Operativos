@@ -8,13 +8,16 @@ using namespace std;
 
 int main(void) {
 	pair<string, unsigned int> p;
-	list<string> l = { "corpus", "corpus", "corpus", "corpus", "zz" };
+	list<string> l = { "corpus", "corpus", "zz", "zz", "zz" };
 
 	/*if (argc != 3) {
 		cerr << "uso: " << argv[0] << " #tarchivos #tmaximum" << endl;
 		return 1;
-	}*/
+	}*/	
 	int tiempo = 0;
+	auto start = std::chrono::high_resolution_clock::now();
+	auto finish = std::chrono::high_resolution_clock::now();
+
 	for (int i = 1 ; i < 6 ; i++){ // i varia el parametro p archivos
 		for (int j = 1 ; j < 6 ; j++){  // j varia el parametro p maximum
 			for (int k = 0 ; k < 30 ; k++){ // k varia las instancias

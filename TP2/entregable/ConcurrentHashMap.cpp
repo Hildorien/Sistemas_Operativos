@@ -48,16 +48,13 @@ using namespace std;
 
       bool ConcurrentHashMap::member(string key){
             int ik = hash(key[0]);
-            //readLock(ik); 
             Lista< pair<string, unsigned int> >::Iterador it = tabla[ik]->CrearIt();
             while(it.HaySiguiente()){
                   if(it.Siguiente().first == key){ 
-                  //readUnlock(ik);
                   return true;  
                   }
             it.Avanzar();
             }
-            //readUnlock(ik);
             return false;
 
       }
@@ -72,6 +69,7 @@ using namespace std;
          }
          //maximumParams* threadParams[nt]; //inicializar punteros a struct
          int j = nt;
+         
 
          int numeroLista = 0;
          pthread_mutex_t mutex;
