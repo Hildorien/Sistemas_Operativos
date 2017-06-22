@@ -17,7 +17,7 @@ void nodo(unsigned int rank) {
     //int count = 4;
     //MPI_CHAR* buf
     char* buf;
-
+    //cout << "Cree cosas del nodo" << endl;
     while (true) {
         // TODO: Procesar mensaje
     	
@@ -35,7 +35,7 @@ void nodo(unsigned int rank) {
     	MPI_Get_count(&status, MPI_CHAR, &msjcount);
 
     	//Pido un buffer de memoria del tamaño del mensaje
-        buf = (char* )malloc(msjcount * sizeof(MPI_CHAR));
+        buf = (char* )malloc(msjcount);
     	
 
     	//Leo el tag e identifico que funcion tengo que correr.
@@ -47,27 +47,36 @@ void nodo(unsigned int rank) {
 		  funcion = 4 ==> Maximum()
 		  funcion = 5 ==> Quit()
 		*/
-
+    	cout << "ARRANQUE, SOY  " << rank << endl;
     	if (funcion == 1){
     		/* LOAD */
     		//Recepcion bloqueante
-    		MPI_Recv(&buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
+    		
+    		MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
 
+    		//cout << "Me quede esperando a recibir de la consola y ya esta" << endl;
     		//Estamos en condiciones de empezar LOAD. En buff tenemos los parametros. 
+    		//cout << buf << endl;
+    		//cout << "couteame est" << endl;
     		miHashMap.load(buf);
     		trabajarArduamente();
-
+    		//cout << "hice load y TRABAJO TRABAJO!" << endl;
     		free(buf);
     		int* soyRank;
 
     		soyRank = (int* )malloc(sizeof(MPI_INT));
     		soyRank[0] = rank;
+    		//cout << "pedi malloc para mirank" << endl;
     		//Respuesta OK bloqueante.
     		//Se lee: Pasar el contenido que puse en &SOYRANK, 1 elemento del tipo, MPI_INT, destinado a SOURCE, con el tag 99, y furta_comm_world
-    		MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
+    		cout << "TERMINE, SOY  " << rank << endl;
+    		MPI_Send(soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
+    		//cout << "Yo hago un send a la consola manndandole un int" << endl;
     		free(soyRank);
+    		
+    	} else if (1){ 
 
-    	} else if (1){ /*TODO: RESTO DE LAS FUNCIONES*/ }
+    	 }
 
    }
 }

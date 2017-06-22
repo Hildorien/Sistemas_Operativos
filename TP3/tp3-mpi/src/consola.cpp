@@ -48,44 +48,56 @@ static void load(list<string> params) {
     MPI_Status status;
     
     //inicializamos la cola
-    for (unsigned int i = 1; i < np  ; i++) //np nodos  + 1 nodo consola 
+    for (unsigned int i = 1; i < np ; i++) //np nodos  + 1 nodo consola 
     {
     	nodosIdle.push(i);
     }
 
    	int* checkout = (int* )malloc(sizeof(MPI_INT));
-    
+    cout << "Entro a load , pusheo y pido malloc para checkout" << endl;
     for (list<string>::iterator it=params.begin(); it != params.end(); ++it) {
+    	
     	if(nodosIdle.empty()){ //Si no hay nodos idle, esperamos a que haya.
     		//Como no sabemos que nodo se va a desocupar, hacemos un Probe que se fija su idRank
     		MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
     		
     		int nodoLibre = status.MPI_SOURCE; 
     		
-    		MPI_Recv(&checkout,1,MPI_INT,nodoLibre,99,MPI_COMM_WORLD,&status);
+    		MPI_Recv(checkout,1,MPI_INT,nodoLibre,99,MPI_COMM_WORLD,&status);
     		
     		nodosIdle.push(nodoLibre); //pusheo el nuevo nodo libre
     	}
-
+    cout << "Sali del if , hay nodos libres" << endl;
+    
     int nodoATrabajar = nodosIdle.front();
+    
     nodosIdle.pop();
+
     char* libro = (char*)malloc((*it).size());
 
-    MPI_Send(&libro, (*it).size() , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD);
+    cout << "nodo se pone a laburar y pedimos mem para lo que apunta it:  " << (*it).c_str() << endl;
+    
+    strcpy(libro, (*it).c_str());
+    
+    cout << "nodoaLaburar " << nodoATrabajar << "y su libro es " << libro << endl;
+    MPI_Send(libro, (*it).size() , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD);
+    cout << "enviamos al nodo" << endl;
    //MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
     }
 
     //Ya envie todos los libros que me pasaron como parametro
     //Ahora me quedo esperando a que todos los nodos vuelvan. O sea, a que la cola se llene de nuevo.
-    while(nodosIdle.size() != np){
+    while(nodosIdle.size() != np-1){
     	
     	MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
     		
     	int nodoTermino = status.MPI_SOURCE; 
     		
-    	MPI_Recv(&checkout,1,MPI_INT,nodoTermino,99,MPI_COMM_WORLD,&status);
+    	MPI_Recv(checkout,1,MPI_INT,nodoTermino,99,MPI_COMM_WORLD,&status);
 
     	nodosIdle.push(nodoTermino);
+
+    	cout << "espero a que terminen los nodos" << endl;
     }
 
 
