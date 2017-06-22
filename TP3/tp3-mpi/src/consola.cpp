@@ -29,37 +29,65 @@ static unsigned int np;
 		  Tag = 99 ==> Respuesta de Nodo
 */
 
-       int MPI_Bsend(
+     /*  int MPI_Bsend(
                void *buf,
                int count,
                MPI_Datatype datatype,
                int dest,
                int tag,
                MPI_Comm comm )
-
+*/
 
 
 
 
 // Crea un ConcurrentHashMap distribuido
 static void load(list<string> params) {
+    
+    queue<int> nodosIdle;
+    MPI_Status status;
+    
+    //inicializamos la cola
+    for (unsigned int i = 1; i < np  ; i++) //np nodos  + 1 nodo consola 
+    {
+    	nodosIdle.push(i);
+    }
 
+   	int* checkout = (int* )malloc(sizeof(MPI_INT));
+    
     for (list<string>::iterator it=params.begin(); it != params.end(); ++it) {
-       // TODO: Implementar
-    	if ( np < params.size() ){ // Si tengo mas archivos que nodos voy a tener que usar una cola de nodos libres para reasignarles archivos y usar un recieved bloqueante que se quede esperando a un nodo que termine 
-    	
-
-    	} else { // Si no , bueno es un simple send y recieved no bloqueante 
-
+    	if(nodosIdle.empty()){ //Si no hay nodos idle, esperamos a que haya.
+    		//Como no sabemos que nodo se va a desocupar, hacemos un Probe que se fija su idRank
+    		MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    		
+    		int nodoLibre = status.MPI_SOURCE; 
+    		
+    		MPI_Recv(&checkout,1,MPI_INT,nodoLibre,99,MPI_COMM_WORLD,&status);
+    		
+    		nodosIdle.push(nodoLibre); //pusheo el nuevo nodo libre
     	}
 
+    int nodoATrabajar = nodosIdle.front();
+    nodosIdle.pop();
+    char* libro = (char*)malloc((*it).size());
 
-
-
-    	MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
-
-
+    MPI_Send(&libro, (*it).size() , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD);
+   //MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
     }
+
+    //Ya envie todos los libros que me pasaron como parametro
+    //Ahora me quedo esperando a que todos los nodos vuelvan. O sea, a que la cola se llene de nuevo.
+    while(nodosIdle.size() != np){
+    	
+    	MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    		
+    	int nodoTermino = status.MPI_SOURCE; 
+    		
+    	MPI_Recv(&checkout,1,MPI_INT,nodoTermino,99,MPI_COMM_WORLD,&status);
+
+    	nodosIdle.push(nodoTermino);
+    }
+
 
     cout << "La listá esta procesada" << endl;
 }
