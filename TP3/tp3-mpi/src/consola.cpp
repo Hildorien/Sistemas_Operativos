@@ -54,7 +54,7 @@ static void load(list<string> params) {
     }
 
    	int* checkout = (int* )malloc(sizeof(MPI_INT));
-    cout << "Entro a load , pusheo y pido malloc para checkout" << endl;
+    //cout << "Entro a load , pusheo y pido malloc para checkout" << endl;
     for (list<string>::iterator it=params.begin(); it != params.end(); ++it) {
     	
     	if(nodosIdle.empty()){ //Si no hay nodos idle, esperamos a que haya.
@@ -67,7 +67,7 @@ static void load(list<string> params) {
     		
     		nodosIdle.push(nodoLibre); //pusheo el nuevo nodo libre
     	}
-    cout << "Sali del if , hay nodos libres" << endl;
+   // cout << "Sali del if , hay nodos libres" << endl;
     
     int nodoATrabajar = nodosIdle.front();
     
@@ -75,13 +75,13 @@ static void load(list<string> params) {
 
     char* libro = (char*)malloc((*it).size());
 
-    cout << "nodo se pone a laburar y pedimos mem para lo que apunta it:  " << (*it).c_str() << endl;
+    //cout << "nodo se pone a laburar y pedimos mem para lo que apunta it:  " << (*it).c_str() << endl;
     
     strcpy(libro, (*it).c_str());
     
-    cout << "nodoaLaburar " << nodoATrabajar << "y su libro es " << libro << endl;
+    //cout << "nodoaLaburar " << nodoATrabajar << "y su libro es " << libro << endl;
     MPI_Send(libro, (*it).size() , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD);
-    cout << "enviamos al nodo" << endl;
+    //cout << "enviamos al nodo" << endl;
    //MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
     }
 
@@ -97,7 +97,7 @@ static void load(list<string> params) {
 
     	nodosIdle.push(nodoTermino);
 
-    	cout << "espero a que terminen los nodos" << endl;
+    	//cout << "espero a que terminen los nodos" << endl;
     }
 
 
@@ -133,8 +133,10 @@ static void member(string key) {
 // Esta función suma uno a *key* en algún nodo
 static void addAndInc(string key) {
 
-    // TODO: Implementar
+//char* palabra = (char*)malloc((*it).size());
 
+	    
+//MPI_Bcast (palabra,key.size(),MPI_CHAR,SOURCE,MPI_COMM_WORLD);
     cout << "Agregado: " << key << endl;
 }
 

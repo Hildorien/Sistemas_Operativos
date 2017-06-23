@@ -17,6 +17,7 @@ void nodo(unsigned int rank) {
     //int count = 4;
     //MPI_CHAR* buf
     char* buf;
+    int* bufi;
     //cout << "Cree cosas del nodo" << endl;
     while (true) {
         // TODO: Procesar mensaje
@@ -74,7 +75,53 @@ void nodo(unsigned int rank) {
     		//cout << "Yo hago un send a la consola manndandole un int" << endl;
     		free(soyRank);
     		
-    	} else if (1){ 
+    	} else if (funcion == 2){ 
+    		/*ADD AND INC*/
+
+    		bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
+    		int tamMsj;
+    		//Primer Recv. Los nodos se enteran que hay para hacer un addAndInc
+    		MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
+			
+			//Le avisamos a SOURCE que esuchamos la orden
+			MPI_Send(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD);
+
+		
+    		
+			//Me quedo esperando a la confirmacion de source (si tengo que hacer addAndInc o no)
+			MPI_Recv(bufi,1,MPI_INT,SOURCE,funcion,MPI_COMM_WORLD,&status);
+
+			if ( (*bufi) == 1)
+			{
+				//Recibi un 1. Entonces me toca trabajar. Me quedo esperando a que me mande el stringw
+				MPI_Probe(SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+				MPI_Get_count(&status, MPI_CHAR, &tamMsj);
+
+				free(buf);
+				buf = (char* )malloc(tamMsj);
+
+				MPI_Recv(buf,tamMsj,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
+
+				miHashMap.addAndInc(buf);
+				trabajarArduamente();
+			}
+
+			free(bufi);
+			free(buf);
+
+			int* soyRank;
+			soyRank = (int* )malloc(sizeof(MPI_INT));
+    		soyRank[0] = rank;
+    		//cout << "pedi malloc para mirank" << endl;
+    		//Respuesta OK bloqueante.
+    		//Se lee: Pasar el contenido que puse en &SOYRANK, 1 elemento del tipo, MPI_INT, destinado a SOURCE, con el tag 99, y furta_comm_world
+    		cout << "TERMINE, SOY  " << rank << endl;
+    		MPI_Send(soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
+    		//cout << "Yo hago un send a la consola manndandole un int" << endl;
+    		free(soyRank);
+
+
+    	 }else if (1) {
 
     	 }
 
