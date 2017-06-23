@@ -133,10 +133,60 @@ static void member(string key) {
 // Esta función suma uno a *key* en algún nodo
 static void addAndInc(string key) {
 
-//char* palabra = (char*)malloc((*it).size());
+    MPI_Status status;
+    int* bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
+    char* palabra = (char* )malloc(key.size());
+    int* checkout = (int* )malloc(sizeof(MPI_INT));
+    int tamMsj;
+        
 
-	    
-//MPI_Bcast (palabra,key.size(),MPI_CHAR,SOURCE,MPI_COMM_WORLD);
+
+   // cout << "Voy a a mandarle a todos un aviso" << endl;   
+   for (unsigned int i = 1; i < np ; i++) //np nodos  + 1 nodo consola 
+    {
+        //Le envio a todos los nodos un aviso 
+        MPI_Send(palabra, key.size() ,MPI_CHAR,i,2,MPI_COMM_WORLD);
+    }
+
+    //Espero a recibir el primer nodo que me avisa.
+    MPI_Probe(MPI_ANY_SOURCE, 2, MPI_COMM_WORLD, &status);
+    MPI_Get_count(&status, MPI_CHAR, &tamMsj);
+
+    //Obtengo el nodo que va a realizar el addandinc
+    unsigned int nodoaLaburar = status.MPI_SOURCE;
+    // Recibo ahora el permiso del nodo.
+   // cout << "El nodo que va a laburar es " << nodoaLaburar << endl;
+   // MPI_Recv(palabra,tamMsj,MPI_CHAR,nodoaLaburar,99,MPI_COMM_WORLD,&status);
+   // cout << "Recibi de " << nodoaLaburar << "el permiso" << endl;
+    for (unsigned int i = 1; i < np ; i++) //Para todos los nodos 
+    {
+        if( i == nodoaLaburar) //Si es el nodo que tiene que hacer addandInc
+        {
+           // cout << "Es el nodoaLaburar mandemosle en bufi un 1" << endl;
+            (*bufi) = 1; //Mandamos a bufi un 1
+            strcpy(palabra, key.c_str()); //Mandamos la palabra con key
+           // cout << "bufi tiene " << (*bufi) << " y la palabra a mandar es " << key << endl;
+            MPI_Send(bufi,1,MPI_INT,i,2,MPI_COMM_WORLD);
+            MPI_Send(palabra, key.size() ,MPI_CHAR,i,2,MPI_COMM_WORLD);
+        }
+        else
+        {   //Si no tiene que laburar enviamos en bufi un 0
+            (*bufi) = 0;
+           // cout << "A " << i << " no le toca laburar , le mando un 0 en bufi " << endl;
+            MPI_Send(bufi,1,MPI_INT,i,2,MPI_COMM_WORLD);
+        }
+    
+    }
+
+   /*  for(unsigned int i = 1 ; i < np ; i++){       
+        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);          
+        int nodoTermino = status.MPI_SOURCE; 
+        cout << "Recibi un aviso de que " << nodoTermino << " termino" << endl;
+        MPI_Recv(checkout,1,MPI_INT,nodoTermino,99,MPI_COMM_WORLD,&status);
+        cout << "Recibo el aviso " << endl;
+    }*/
+    MPI_Recv(checkout,1,MPI_INT,nodoaLaburar,99,MPI_COMM_WORLD,&status);
+
     cout << "Agregado: " << key << endl;
 }
 
