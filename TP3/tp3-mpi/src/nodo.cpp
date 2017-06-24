@@ -126,7 +126,7 @@ void nodo(unsigned int rank) {
             //Member
 
             bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
-            
+
             //Primer recieved. Los nodos se enteran de que tienen que hacer member
             MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
             
@@ -147,7 +147,13 @@ void nodo(unsigned int rank) {
             free(buf);
 
     	 }else if(1){
-
+            //MAXIMUM.
+            //Itero sobre mi hashMap mandandole palabra por palabra
+            //Le mando un mensaje a la consola que termine.
+         }else if(1){
+            //QUIT
+            //Espero a recibir un quit
+            // Libero mis recursos.
          }
 
    }

@@ -121,6 +121,10 @@ static void maximum() {
     pair<string, unsigned int> result;
 
     // TODO: Implementar
+    // Creamos un HashMap.
+    //Esperamos a que todos los nodos envien todas sus palabras de sus hashmap y vamos metiendolos en el hashmap de la consola.
+    // Hacemos maximum con el hashmap de la consola.
+    
     string str("a");
     result = make_pair(str,10);
 
