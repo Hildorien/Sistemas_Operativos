@@ -122,9 +122,33 @@ void nodo(unsigned int rank) {
 			free(bufi);
 			free(buf);
 
-    	 }else if (1) {
+    	 }else if ( funcion == 3) {
+            //Member
 
-    	 }
+            bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
+            
+            //Primer recieved. Los nodos se enteran de que tienen que hacer member
+            MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
+            
+            bool res = miHashMap.member(buf);
+            trabajarArduamente();
+
+            if (res) 
+            {
+                (*bufi) = 1;
+                MPI_Send(bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
+            }else 
+            {
+                (*bufi) = 0;
+                MPI_Send(bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
+            }
+
+            free(bufi);
+            free(buf);
+
+    	 }else if(1){
+
+         }
 
    }
 }

@@ -106,7 +106,14 @@ static void load(list<string> params) {
 
 // Esta función debe avisar a todos los nodos que deben terminar
 static void quit() {
-    // TODO: Implementar
+     
+     char* checkout = (char* )malloc(4);
+
+     for (unsigned int i = 1; i < np ; i++) //np nodos  + 1 nodo consola 
+    {
+        //Le envio a todos los nodos la palabra
+        MPI_Send(checkout, 1 ,MPI_CHAR,i,5,MPI_COMM_WORLD);
+    }
 }
 
 // Esta función calcula el máximo con todos los nodos
@@ -122,9 +129,32 @@ static void maximum() {
 
 // Esta función busca la existencia de *key* en algún nodo
 static void member(string key) {
+    
+    MPI_Status status;
     bool esta = false;
+    //int tamMsj;
+    char* palabra = (char* )malloc(key.size());
+    int* bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
 
-    // TODO: Implementar
+    strcpy(palabra, key.c_str()); //Mandamos la palabra con key
+    for (unsigned int i = 1; i < np ; i++) //np nodos  + 1 nodo consola 
+    {
+        //Le envio a todos los nodos la palabra
+        MPI_Send(palabra, key.size() ,MPI_CHAR,i,3,MPI_COMM_WORLD);
+    }
+
+    for (unsigned int i = 1 ; i < np ; i++)
+    {
+    
+        MPI_Recv(bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
+        if( (*bufi) == 1 ) 
+        {
+            esta = true;
+        }
+
+    
+    }
+
 
     cout << "El string <" << key << (esta ? ">" : "> no") << " está" << endl;
 }

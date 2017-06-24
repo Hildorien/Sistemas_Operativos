@@ -62,7 +62,7 @@ bool HashMap::member(const string &key) const {
     kv_list const &bucket = table[index];
 
     // Me fijo si la palabra está
-    bool res;
+    bool res = false;
     for (kv_list_const_it it = bucket.begin();
         it != bucket.end();
         ++it)
