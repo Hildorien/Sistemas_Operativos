@@ -108,12 +108,25 @@ static void load(list<string> params) {
 static void quit() {
      
      char* checkout = (char* )malloc(4);
+     int* bufi = (int* )malloc(8);
+     MPI_Status status;
 
-     for (unsigned int i = 1; i < np ; i++) //np nodos  + 1 nodo consola 
+     for (unsigned int i = 1; i < np ; i++)
     {
-        //Le envio a todos los nodos la palabra
+        //Le envio a todos un aviso de que tienen que hacer quit.
         MPI_Send(checkout, 1 ,MPI_CHAR,i,5,MPI_COMM_WORLD);
     }
+
+    //Espero a quue todos los nodos me avisen que liberaron sus recursos
+    for (unsigned int i = 1 ; i < np ; i++)
+    {
+    
+        MPI_Recv(bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
+    }
+
+    free(checkout);
+    free(bufi);
+
 }
 
 // Esta función calcula el máximo con todos los nodos

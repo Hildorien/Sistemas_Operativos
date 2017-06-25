@@ -146,14 +146,26 @@ void nodo(unsigned int rank) {
             free(bufi);
             free(buf);
 
-    	 }else if(1){
+    	 }else if(funcion == 5){
+            //QUIT
+            bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
+            //Espero a recibir un quit
+            MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
+
+            // Libero mis recursos. El hashmap es local , se deberia destruir solo
+            (*bufi) = rank;
+            // Le aviso al source que termine mandandole mi rank
+
+            MPI_Send(bufi,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
+            
+            free(bufi);
+            free(buf);
+            break;
+
+         }else if(1){
             //MAXIMUM.
             //Itero sobre mi hashMap mandandole palabra por palabra
             //Le mando un mensaje a la consola que termine.
-         }else if(1){
-            //QUIT
-            //Espero a recibir un quit
-            // Libero mis recursos.
          }
 
    }
