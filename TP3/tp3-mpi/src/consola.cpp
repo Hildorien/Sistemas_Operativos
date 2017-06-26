@@ -134,16 +134,48 @@ static void quit() {
 
 // Esta función calcula el máximo con todos los nodos
 static void maximum() {
-    pair<string, unsigned int> result;
+    kv_pair result;
+
+    HashMap totalHashMap;
+    MPI_Status status;
+    char* dummy;
+    char* buf;
+
+    for (int i = 1; i < np; i++)
+    {
+        MPI_Send(dummy, 0,MPI_CHAR,i,4,MPI_COMM_WORLD);
+    }
+
+    int contadorTerminados = 0;
+    while (contadorTerminados < np)
+    {
+        int msgTag;
+        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        int largoMsj;
+
+        MPI_Get_count(&status, MPI_CHAR, &largoMsj);
+
+        buf = (char* )malloc(largoMsj)
+        msgTag = status.MPI_TAG;
+
+        if (msgTag == 4){
+            contadorTerminados++;
+        }
+        else{
+            MPI_Recv(buf, largoMsj, MPI_CHAR,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
+        
+            buf[msjcount] = NULL;
+            totalHashMap.load(buf);
+        }
+            
+    }
 
     // TODO: Implementar
     // Creamos un HashMap.
     //Esperamos a que todos los nodos envien todas sus palabras de sus hashmap y vamos metiendolos en el hashmap de la consola.
     // Hacemos maximum con el hashmap de la consola.
+    result = totalHashMap.maximum();
     
-    string str("a");
-    result = make_pair(str,10);
-
     cout << "El máximo es <" << result.first <<"," << result.second << ">" << endl;
 }
 
