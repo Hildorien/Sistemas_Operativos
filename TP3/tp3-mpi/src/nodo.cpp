@@ -52,17 +52,18 @@ void nodo(unsigned int rank) {
     	if (funcion == 1){
     		/* LOAD */
     		//Recepcion bloqueante
-    		
+
     		MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
 
     		//cout << "Me quede esperando a recibir de la consola y ya esta" << endl;
     		//Estamos en condiciones de empezar LOAD. En buff tenemos los parametros. 
-    		//cout << buf << endl;
-    		//cout << "couteame est" << endl;
-    		miHashMap.load(buf);
+            buf[msjcount] = NULL;
+    
+            miHashMap.load(buf);
     		trabajarArduamente();
     		//cout << "hice load y TRABAJO TRABAJO!" << endl;
     		free(buf);
+
     		int* soyRank;
 
     		soyRank = (int* )malloc(sizeof(MPI_INT));

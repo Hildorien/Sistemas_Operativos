@@ -80,9 +80,12 @@ static void load(list<string> params) {
     strcpy(libro, (*it).c_str());
     
     //cout << "nodoaLaburar " << nodoATrabajar << "y su libro es " << libro << endl;
+    //cout << (*it).size() << endl;
     MPI_Send(libro, (*it).size() , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD);
     //cout << "enviamos al nodo" << endl;
    //MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
+    free(libro);
+
     }
 
     //Ya envie todos los libros que me pasaron como parametro
@@ -100,7 +103,7 @@ static void load(list<string> params) {
     	//cout << "espero a que terminen los nodos" << endl;
     }
 
-
+    
     cout << "La listá esta procesada" << endl;
 }
 
