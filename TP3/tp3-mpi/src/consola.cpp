@@ -7,6 +7,9 @@
 #include <iostream>
 #include <sstream>
 #include <queue>
+#include <algorithm>
+#include <ctype.h>
+#include <utility>
 #include "consola.hpp"
 #include "HashMap.hpp"
 #include "mpi.h"
@@ -134,28 +137,30 @@ static void quit() {
 
 // Esta función calcula el máximo con todos los nodos
 static void maximum() {
-    kv_pair result;
+    
+    pair <string, unsigned int> result ("", 0);
 
     HashMap totalHashMap;
     MPI_Status status;
     char* dummy;
     char* buf;
+    int msgTag;
 
-    for (int i = 1; i < np; i++)
+    for (unsigned int i = 1; i < np; i++)
     {
-        MPI_Send(dummy, 0,MPI_CHAR,i,4,MPI_COMM_WORLD);
+        MPI_Send(dummy,1,MPI_CHAR,i,4,MPI_COMM_WORLD);
     }
 
-    int contadorTerminados = 0;
-    while (contadorTerminados < np)
+    unsigned int contadorTerminados = 0;
+    while (contadorTerminados < np - 1)
     {
-        int msgTag;
+        
         MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         int largoMsj;
 
         MPI_Get_count(&status, MPI_CHAR, &largoMsj);
 
-        buf = (char* )malloc(largoMsj)
+        buf = (char* )malloc(largoMsj);
         msgTag = status.MPI_TAG;
 
         if (msgTag == 4){
@@ -165,7 +170,7 @@ static void maximum() {
             MPI_Recv(buf, largoMsj, MPI_CHAR,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
         
             buf[msjcount] = NULL;
-            totalHashMap.load(buf);
+            totalHashMap.addAndInc(buf);
         }
             
     }

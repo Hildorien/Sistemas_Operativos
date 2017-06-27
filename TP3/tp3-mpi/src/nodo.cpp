@@ -3,6 +3,9 @@
 #include "mpi.h"
 #include <unistd.h>
 #include <stdlib.h>
+#include <algorithm>
+#include <ctype.h>
+#include <utility>
 
 using namespace std;
 
@@ -85,7 +88,8 @@ void nodo(unsigned int rank) {
     		MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
 			//cout << "Recibi un aviso de correr addAndInc" << endl;
 			//Le avisamos a SOURCE que esuchamos la orden mandandole nuestro rank
-			MPI_Send(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD);
+			trabajarArduamente();
+            MPI_Send(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD);
 
 		
     		//cout << "Le mande a consola que lo voy a correr" << endl;
@@ -156,17 +160,36 @@ void nodo(unsigned int rank) {
             // Libero mis recursos. El hashmap es local , se deberia destruir solo
             (*bufi) = rank;
             // Le aviso al source que termine mandandole mi rank
-
+            trabajarArduamente();
             MPI_Send(bufi,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
             
             free(bufi);
             free(buf);
             break;
 
-         }else if(1){
+         }else if(funcion == 4){
             //MAXIMUM.
+            //Espero a recibir un maximum
+            MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
+
+
             //Itero sobre mi hashMap mandandole palabra por palabra
+            for (list<pair<string, unsigned int> >::iterator it = miHashMap.begin(); it != miHashMap.end(); ++it){
+                buf = (char*)malloc((*it).first.size());
+                
+                strcpy(buf, (*it).first.c_str());
+                
+                trabajarArduamente();
+                MPI_Send(buf,(*it).first.size(), MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
+            }
             //Le mando un mensaje a la consola que termine.
+                char* termine;
+                termine = (char* )malloc(sizeof(MPI_CHAR));
+                termine[0] = 't';                
+                trabajarArduamente();
+                MPI_Send(termine,1, MPI_CHAR,SOURCE, 4 , MPI_COMM_WORLD);
+                free(termine);
+                free(buf);
          }
 
    }
