@@ -190,6 +190,8 @@ void nodo(unsigned int rank) {
                 
                 //cout << "Mando la palabra: " << buf << endl;
                 MPI_Send(buf,(*it).size(), MPI_CHAR, SOURCE, 99 , MPI_COMM_WORLD);
+
+                free(buf);
             
             }
             /*
@@ -211,7 +213,7 @@ void nodo(unsigned int rank) {
                 MPI_Send(termine,1, MPI_CHAR,SOURCE, 90 , MPI_COMM_WORLD);
                // cout << "Soy el nodo " << rank << "Y ya me confirmaron que me puedo morir!" << endl;             
                 free(termine);
-                free(buf);
+                //free(buf);
          }
 
    }
