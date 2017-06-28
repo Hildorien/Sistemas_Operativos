@@ -47,7 +47,7 @@ static void load(list<string> params) {
     }
 
    	int* checkout = (int* )malloc(sizeof(MPI_INT));
-    //cout << "Entro a load , pusheo y pido malloc para checkout" << endl;
+    
     for (list<string>::iterator it=params.begin(); it != params.end(); ++it) {
     	
     	if(nodosIdle.empty()){ //Si no hay nodos idle, esperamos a que haya.
@@ -60,24 +60,18 @@ static void load(list<string> params) {
     		
     		nodosIdle.push(nodoLibre); //pusheo el nuevo nodo libre
     	}
-   // cout << "Sali del if , hay nodos libres" << endl;
     
-    int nodoATrabajar = nodosIdle.front();
+        int nodoATrabajar = nodosIdle.front();
     
-    nodosIdle.pop();
+        nodosIdle.pop();
 
-    char* libro = (char*)malloc((*it).size());
+        char* libro = (char*)malloc((*it).size());
 
-    //cout << "nodo se pone a laburar y pedimos mem para lo que apunta it:  " << (*it).c_str() << endl;
+        strcpy(libro, (*it).c_str());
     
-    strcpy(libro, (*it).c_str());
-    
-    //cout << "nodoaLaburar " << nodoATrabajar << "y su libro es " << libro << endl;
-    //cout << (*it).size() << endl;
-    MPI_Send(libro, (*it).size() , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD);
-    //cout << "enviamos al nodo" << endl;
-   //MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
-    free(libro);
+        MPI_Send(libro, (*it).size() , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD);
+        
+        free(libro);
 
     }
 
@@ -93,7 +87,6 @@ static void load(list<string> params) {
 
     	nodosIdle.push(nodoTermino);
 
-    	//cout << "espero a que terminen los nodos" << endl;
     }
 
     free(checkout);
@@ -150,47 +143,37 @@ static void maximum() {
         
         MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG , MPI_COMM_WORLD, &status);
         int largoMsj;
-        //int quiensos;
+        
         MPI_Get_count(&status, MPI_CHAR, &largoMsj);
 
-        //quiensos = status.MPI_SOURCE;
+        
         buf = (char* )malloc(largoMsj);
         msgTag = status.MPI_TAG;
 
 
-        //cout << "Nuevo mensaje recibido! con el tag " << msgTag << "del nodo " << quiensos << endl; 
-
         if (msgTag == 90){
             //Tengo que asegurarme de descartar el mensaje
-            //cout << "recibi un 90!" << endl;
+            
             MPI_Recv(buf, largoMsj, MPI_CHAR,MPI_ANY_SOURCE,90,MPI_COMM_WORLD,&status);
             
             buf[largoMsj] = 0;
             contadorTerminados++;
-           // cout << "Mate un nodo!, y van: " << contadorTerminados << " de " << np-1 << endl;
+           
         }
         if(msgTag == 99){
 
             MPI_Recv(buf, largoMsj, MPI_CHAR,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
         	
         	buf[largoMsj] = 0;
-        	//cout << "A punto de agregar la palabra " << buf <<  endl;
-        	totalHashMap.addAndInc(buf);
+        	
+            totalHashMap.addAndInc(buf);
 
             
         }
 
-        /*if(msgTag != 99 && msgTag != 90){
-        	
-        	MPI_Recv(buf, largoMsj, MPI_CHAR,MPI_ANY_SOURCE,msgTag,MPI_COMM_WORLD,&status);
-        	//cout << "el msg tag es: " << msgTag << "y el mensaje es " << buf << endl;
-        }*/
             
     }
-    //cout << "sali del while!" << endl;
-    // TODO: Implementar
-    // Creamos un HashMap.
-    //Esperamos a que todos los nodos envien todas sus palabras de sus hashmap y vamos metiendolos en el hashmap de la consola.
+
     // Hacemos maximum con el hashmap de la consola.
     result = totalHashMap.maximum();
     
