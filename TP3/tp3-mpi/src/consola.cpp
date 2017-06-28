@@ -29,20 +29,10 @@ static unsigned int np;
 		  Tag = 3 ==> member()
 		  Tag = 4 ==> Maximum()
 		  Tag = 5 ==> Quit()
+		  Tag = 90 ==> Respuesta de Nodo: Termino maximum
 		  Tag = 99 ==> Respuesta de Nodo
+
 */
-
-     /*  int MPI_Bsend(
-               void *buf,
-               int count,
-               MPI_Datatype datatype,
-               int dest,
-               int tag,
-               MPI_Comm comm )
-*/
-
-
-
 
 // Crea un ConcurrentHashMap distribuido
 static void load(list<string> params) {
@@ -50,7 +40,7 @@ static void load(list<string> params) {
     queue<int> nodosIdle;
     MPI_Status status;
     
-    //inicializamos la cola
+    //Inicializamos la cola
     for (unsigned int i = 1; i < np ; i++) //np nodos  + 1 nodo consola 
     {
     	nodosIdle.push(i);
@@ -106,6 +96,7 @@ static void load(list<string> params) {
     	//cout << "espero a que terminen los nodos" << endl;
     }
 
+    free(checkout);
     
     cout << "La listá esta procesada" << endl;
 }
@@ -142,12 +133,14 @@ static void maximum() {
 
     HashMap totalHashMap;
     MPI_Status status;
-    char* dummy;
+    char* dummy =(char* )malloc(1);
+    (*dummy) = 'e'; //¿Porque una e? ¡Intente decifrarlo! (pista: no importa)
     char* buf;
     int msgTag;
 
     for (unsigned int i = 1; i < np; i++)
     {
+    	//Envien sus palabras!
         MPI_Send(dummy,1,MPI_CHAR,i,4,MPI_COMM_WORLD);
     }
 
@@ -155,34 +148,57 @@ static void maximum() {
     while (contadorTerminados < np - 1)
     {
         
-        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG , MPI_COMM_WORLD, &status);
         int largoMsj;
-
+        //int quiensos;
         MPI_Get_count(&status, MPI_CHAR, &largoMsj);
 
+        //quiensos = status.MPI_SOURCE;
         buf = (char* )malloc(largoMsj);
         msgTag = status.MPI_TAG;
 
-        if (msgTag == 4){
+
+        //cout << "Nuevo mensaje recibido! con el tag " << msgTag << "del nodo " << quiensos << endl; 
+
+        if (msgTag == 90){
+            //Tengo que asegurarme de descartar el mensaje
+            //cout << "recibi un 90!" << endl;
+            MPI_Recv(buf, largoMsj, MPI_CHAR,MPI_ANY_SOURCE,90,MPI_COMM_WORLD,&status);
+            
+            buf[largoMsj] = 0;
             contadorTerminados++;
+           // cout << "Mate un nodo!, y van: " << contadorTerminados << " de " << np-1 << endl;
         }
-        else{
+        if(msgTag == 99){
+
             MPI_Recv(buf, largoMsj, MPI_CHAR,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
-        
-            buf[msjcount] = NULL;
-            totalHashMap.addAndInc(buf);
+        	
+        	buf[largoMsj] = 0;
+        	//cout << "A punto de agregar la palabra " << buf <<  endl;
+        	totalHashMap.addAndInc(buf);
+
+            
         }
+
+        /*if(msgTag != 99 && msgTag != 90){
+        	
+        	MPI_Recv(buf, largoMsj, MPI_CHAR,MPI_ANY_SOURCE,msgTag,MPI_COMM_WORLD,&status);
+        	//cout << "el msg tag es: " << msgTag << "y el mensaje es " << buf << endl;
+        }*/
             
     }
-
+    //cout << "sali del while!" << endl;
     // TODO: Implementar
     // Creamos un HashMap.
     //Esperamos a que todos los nodos envien todas sus palabras de sus hashmap y vamos metiendolos en el hashmap de la consola.
     // Hacemos maximum con el hashmap de la consola.
     result = totalHashMap.maximum();
     
+    free(dummy);
+    free(buf);
     cout << "El máximo es <" << result.first <<"," << result.second << ">" << endl;
-}
+  }
+
 
 // Esta función busca la existencia de *key* en algún nodo
 static void member(string key) {
@@ -212,6 +228,8 @@ static void member(string key) {
     
     }
 
+    free(palabra);
+    free(bufi);
 
     cout << "El string <" << key << (esta ? ">" : "> no") << " está" << endl;
 }
@@ -224,7 +242,6 @@ static void addAndInc(string key) {
     int* bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
     char* palabra = (char* )malloc(key.size());
     int* checkout = (int* )malloc(sizeof(MPI_INT));
-    int tamMsj;
         
 
 
@@ -235,16 +252,20 @@ static void addAndInc(string key) {
         MPI_Send(palabra, key.size() ,MPI_CHAR,i,2,MPI_COMM_WORLD);
     }
 
-    //Espero a recibir el primer nodo que me avisa.
-    MPI_Probe(MPI_ANY_SOURCE, 2, MPI_COMM_WORLD, &status);
-    MPI_Get_count(&status, MPI_CHAR, &tamMsj);
-
-    //Obtengo el nodo que va a realizar el addandinc
-    unsigned int nodoaLaburar = status.MPI_SOURCE;
+   //Obtengo el nodo que va a realizar el addandinc
+   unsigned int nodoaLaburar;
     // Recibo ahora el permiso del nodo.
    // cout << "El nodo que va a laburar es " << nodoaLaburar << endl;
    // MPI_Recv(palabra,tamMsj,MPI_CHAR,nodoaLaburar,99,MPI_COMM_WORLD,&status);
    // cout << "Recibi de " << nodoaLaburar << "el permiso" << endl;
+
+    for (unsigned int i = 1; i < np; i++)
+    {
+    	MPI_Recv(bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
+        if(i == 1){ nodoaLaburar = status.MPI_SOURCE;}
+    }
+
+
     for (unsigned int i = 1; i < np ; i++) //Para todos los nodos 
     {
         if( i == nodoaLaburar) //Si es el nodo que tiene que hacer addandInc
@@ -265,14 +286,20 @@ static void addAndInc(string key) {
     
     }
 
-   /*  for(unsigned int i = 1 ; i < np ; i++){       
-        MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);          
-        int nodoTermino = status.MPI_SOURCE; 
-        cout << "Recibi un aviso de que " << nodoTermino << " termino" << endl;
-        MPI_Recv(checkout,1,MPI_INT,nodoTermino,99,MPI_COMM_WORLD,&status);
-        cout << "Recibo el aviso " << endl;
-    }*/
-    MPI_Recv(checkout,1,MPI_INT,nodoaLaburar,99,MPI_COMM_WORLD,&status);
+     for(unsigned int i = 1 ; i < np ; i++){       
+        
+        MPI_Recv(bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);   
+       
+        //int nodoTermino = status.MPI_SOURCE; 
+       
+        //cout << "Recibi un aviso de que " << nodoTermino << " termino" << endl;
+        
+    }
+    //MPI_Recv(checkout,1,MPI_INT,nodoaLaburar,99,MPI_COMM_WORLD,&status);
+
+    free(bufi);
+    free(palabra);
+    free(checkout);
 
     cout << "Agregado: " << key << endl;
 }
