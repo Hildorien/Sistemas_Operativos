@@ -87,9 +87,7 @@ void nodo(unsigned int rank) {
     		//Primer Recv. Los nodos se enteran que hay para hacer un addAndInc
     		MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
 			//cout << "Recibi un aviso de correr addAndInc" << endl;
-			//Le avisamos a SOURCE que esuchamos la orden mandandole nuestro rank
-			trabajarArduamente();
-			//cout << ""
+	
             MPI_Send(bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
 
 		
@@ -190,7 +188,6 @@ void nodo(unsigned int rank) {
                 
                 strcpy(buf, (*it).c_str());
                 
-                trabajarArduamente();
                 //cout << "Mando la palabra: " << buf << endl;
                 MPI_Send(buf,(*it).size(), MPI_CHAR, SOURCE, 99 , MPI_COMM_WORLD);
             
