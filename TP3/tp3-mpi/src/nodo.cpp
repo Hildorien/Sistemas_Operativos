@@ -3,6 +3,9 @@
 #include "mpi.h"
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <cstring>
+#include <iostream>
 #include <algorithm>
 #include <ctype.h>
 #include <utility>
@@ -177,26 +180,22 @@ void nodo(unsigned int rank) {
 
             for (;it != itEnd; it++)
             {
-            	buf = (char*)malloc((*it).size());
+            	//buf = (char*)malloc((*it).size());
                 
-                strcpy(buf, (*it).c_str());
-                
-                MPI_Send(buf,(*it).size(), MPI_CHAR, SOURCE, 99 , MPI_COMM_WORLD);
+                char palabra[(*it).size() + 1];
+                strcpy(palabra, (*it).c_str());
+                //cout << palabra << " " << (*it).size()+1 << endl;
+                MPI_Send(palabra,(*it).size()+1, MPI_CHAR, SOURCE, 99 , MPI_COMM_WORLD);
 
-                free(buf);
             
             }
             
             //Le mando un mensaje a la consola que termine.
             char* termine;
-            termine = (char* )malloc(sizeof(MPI_CHAR));
-            termine[0] = 't';                
             trabajarArduamente();
                 
             MPI_Send(termine,1, MPI_CHAR,SOURCE, 90 , MPI_COMM_WORLD);
-                
-            free(termine);
-                
+                    
          }
 
    }
