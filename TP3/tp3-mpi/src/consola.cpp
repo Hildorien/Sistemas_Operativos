@@ -65,14 +65,16 @@ static void load(list<string> params) {
     
         nodosIdle.pop();
 
-        char libro[(*it).size()];
+        char libro[(*it).size()+1];
 
         strcpy(libro, (*it).c_str());
 
+        cout << libro << endl;
+
         MPI_Request req;
     
-        MPI_Isend(libro, (*it).size() , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD, &req);
-        
+        MPI_Isend(libro, (*it).size()+1 , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD, &req);
+        //El tamaño es (*it).size + 1, ya que tambien queremos agregar el byte null. (si el buffer es de tamaño .size() no lo manda)
 
     }
 
@@ -96,20 +98,17 @@ static void load(list<string> params) {
 
 // Esta función debe avisar a todos los nodos que deben terminar
 static void quit() {
-     
-     //char* checkout = (char* )malloc(4);
-     //int* bufi = (int* )malloc(8);
-     
+    
     char checkout[4];
     int bufi[2];
      
     MPI_Status status;
-    MPI_Request req[np-1];
+    MPI_Request req;
 
     for (unsigned int i = 1; i < np ; i++)
     {
         //Le envio a todos un aviso de que tienen que hacer quit.
-        MPI_Isend(checkout, 1 ,MPI_CHAR,i,5,MPI_COMM_WORLD, &req[i-1]);
+        MPI_Isend(checkout, 1 ,MPI_CHAR,i,5,MPI_COMM_WORLD, &req);
     }
 
     //Espero a quue todos los nodos me avisen que liberaron sus recursos
@@ -130,13 +129,12 @@ static void maximum() {
     MPI_Status status;
     char dummy = 'e';
     
-    char* buf;
     int msgTag;
+    MPI_Request req;
 
     for (unsigned int i = 1; i < np; i++)
     {
     	//Envien sus palabras!
-        MPI_Request req;
         MPI_Isend(&dummy,1,MPI_CHAR,i,4,MPI_COMM_WORLD, &req);
     }
 
@@ -158,8 +156,6 @@ static void maximum() {
 
             //cout << " 2do Probe: long = " << largoMsj << ", nodo = " << status.MPI_SOURCE << endl;
             MPI_Recv(palabra, largoMsj, MPI_CHAR,source,99,MPI_COMM_WORLD,&status);
-            //cout << "palabra recibida" << endl;
-            //buf[largoMsj] = 0;
             
             totalHashMap.addAndInc(palabra);
 
@@ -192,15 +188,15 @@ static void member(string key) {
     MPI_Status status;
     bool esta = false;
     //int tamMsj;
-    char palabra[key.size()]; 
-    int bufi; //Malloc size 4, tamaño de un entero.
+    char palabra[key.size()+1]; 
+    int bufi; 
 
     strcpy(palabra, key.c_str()); //Mandamos la palabra con key
     for (unsigned int i = 1; i < np ; i++) //np nodos  + 1 nodo consola 
     {
         //Le envio a todos los nodos la palabra
         MPI_Request req;
-        MPI_Isend(palabra, key.size() ,MPI_CHAR,i,3,MPI_COMM_WORLD, &req);
+        MPI_Isend(palabra, key.size()+1 ,MPI_CHAR,i,3,MPI_COMM_WORLD, &req);
     }
 
     for (unsigned int i = 1 ; i < np ; i++)
@@ -223,12 +219,11 @@ static void member(string key) {
 static void addAndInc(string key) {
 
     MPI_Status status;
-    int* bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
-    char* palabra = (char* )malloc(key.size());
-    int* checkout = (int* )malloc(sizeof(MPI_INT));
+    int bufi; 
+    char palabra[key.size()]; 
         
 
-    MPI_Request alertReq[np];
+    MPI_Request alertReq[np-1];
    // cout << "Voy a a mandarle a todos un aviso" << endl;   
     for (unsigned int i = 1; i < np ; i++) //np nodos  + 1 nodo consola 
     {
@@ -243,19 +238,19 @@ static void addAndInc(string key) {
    // MPI_Recv(palabra,tamMsj,MPI_CHAR,nodoaLaburar,99,MPI_COMM_WORLD,&status);
    // cout << "Recibi de " << nodoaLaburar << "el permiso" << endl;
 
-    /*for (unsigned int i = 1; i < np; i++)
-    {
-    	MPI_Recv(bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
-        if(i == 1){ nodoaLaburar = status.MPI_SOURCE;}
-    } En vez de esperar a todos esperemos solo a 1 */ 
-
     MPI_Request recvReq[np-1];
+    //Se crea un arreglo de Requests por cada nodo al que se le mande el mensaje.
+    //Cada request es asociado a una peticion MPI_Irecv. Cuando efectivamente recibe un mensaje, 
+    //su request correspondiente cambia de estado.
     for (unsigned int i = 1; i < np; i++)
     {
-        MPI_Irecv(bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD, &recvReq[i-1]);
+        MPI_Irecv(&bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD, &recvReq[i-1]);
     }
     int index;
     MPI_Waitany(np-1, recvReq, &index, &status);
+    //Pasando como parametro el arreglo de requests, MPI_Waitany se bloquea hasta que uno de los requests tenga estado "Terminado". 
+    //Dicho request es copiado a status.
+
     nodoaLaburar = status.MPI_SOURCE;
 
     MPI_Request addReq[np-1];
@@ -264,39 +259,38 @@ static void addAndInc(string key) {
         if( i == nodoaLaburar) //Si es el nodo que tiene que hacer addandInc
         {
            // cout << "Es el nodoaLaburar mandemosle en bufi un 1" << endl;
-            (*bufi) = 1; //Mandamos a bufi un 1
+            bufi = 1; //Mandamos a bufi un 1
             // cout << "bufi tiene " << (*bufi) << " y la palabra a mandar es " << key << endl;
-            MPI_Isend(bufi,1,MPI_INT,i,2,MPI_COMM_WORLD, &addReq[i-1]);
+            MPI_Isend(&bufi,1,MPI_INT,i,2,MPI_COMM_WORLD, &addReq[i-1]);
         }
         else
         {   //Si no tiene que laburar enviamos en bufi un 0
-            (*bufi) = 0;
+            bufi = 0;
            // cout << "A " << i << " no le toca laburar , le mando un 0 en bufi " << endl;
-            MPI_Isend(bufi,1,MPI_INT,i,2,MPI_COMM_WORLD, &addReq[i-1]);
+            MPI_Isend(&bufi,1,MPI_INT,i,2,MPI_COMM_WORLD, &addReq[i-1]);
         }
     
-    }
-
+     }
+     //Enviamos por llamada no bloqueante, las confirmaciones a los nodos, sea para confirmar que tienen que trabajar o no.
+     //Antes de avanzar, nos aseguramos que el nodo que tiene que trabajar, haya recibido el mensaje anterior.
     MPI_Wait(&addReq[nodoaLaburar-1],MPI_STATUS_IGNORE);
     strcpy(palabra, key.c_str()); //Mandamos la palabra con key
-    MPI_Send(palabra, key.size() ,MPI_CHAR,nodoaLaburar,2,MPI_COMM_WORLD);  
+
+    //Una vez sabemos que el nodo esta listo para trabajar, le enviamos la palabra
+    MPI_Request req;
+    MPI_Isend(palabra, key.size() ,MPI_CHAR,nodoaLaburar,2,MPI_COMM_WORLD, &req);  
 
 
     for(unsigned int i = 1 ; i < np ; i++){       
         
-        MPI_Recv(bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);   
+        MPI_Recv(&bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);   
        
         //int nodoTermino = status.MPI_SOURCE; 
        
         //cout << "Recibi un aviso de que " << nodoTermino << " termino" << endl;
         
     }
-    //MPI_Recv(checkout,1,MPI_INT,nodoaLaburar,99,MPI_COMM_WORLD,&status);
-
-    free(bufi);
-    free(palabra);
-    free(checkout);
-
+    
     cout << "Agregado: " << key << endl;
 }
 

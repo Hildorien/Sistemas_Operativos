@@ -21,9 +21,6 @@ void nodo(unsigned int rank) {
     MPI_Status status;
     int SOURCE = 0;
     
-    char* buf;
-    int* bufi;
-    
     while (true) {
         // TODO: Procesar mensaje
     	
@@ -41,9 +38,7 @@ void nodo(unsigned int rank) {
     	MPI_Get_count(&status, MPI_CHAR, &msjcount);
 
     	//Pido un buffer de memoria del tamaño del mensaje
-        buf = (char* )malloc(msjcount);
-    	
-
+        
     	//Leo el tag e identifico que funcion tengo que correr.
     	int funcion = status.MPI_TAG;
 
@@ -57,121 +52,103 @@ void nodo(unsigned int rank) {
         if (funcion == 1){
     		/* LOAD */
     		//Recepcion bloqueante
-
+            char buf[msjcount];
+        
     		MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
     		
             //Estamos en condiciones de empezar LOAD. En buff tenemos los parametros. 
-            buf[msjcount] = 0;
-    		
+    		cout << buf << endl;
             miHashMap.load(buf);
     		trabajarArduamente();
     		
-            free(buf);
+    		int soyRank = rank;
 
-    		int* soyRank;
-
-    		soyRank = (int* )malloc(sizeof(MPI_INT));
-    		soyRank[0] = rank;
-    		
             //Respuesta OK bloqueante.
     		//Se lee: Pasar el contenido que puse en &SOYRANK, 1 elemento del tipo, MPI_INT, destinado a SOURCE, con el tag 99, y furta_comm_world
     		
-            MPI_Send(soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
-    		
-            free(soyRank);
+            MPI_Send(&soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
     		
     	} else if (funcion == 2){ 
     		/*ADD AND INC*/
  
-            bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
+            int bufi; 
     		int tamMsj;
-    		//Primer Recv. Los nodos se enteran que hay para hacer un addAndInc
+    		char buf[msjcount];
+
+            //Primer Recv. Los nodos se enteran que hay para hacer un addAndInc
     		MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
 			
-            MPI_Send(bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
+            MPI_Send(&bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
     		
             //Me quedo esperando a la confirmacion de source (si tengo que hacer addAndInc o no)
-			MPI_Recv(bufi,1,MPI_INT,SOURCE,funcion,MPI_COMM_WORLD,&status);
+			MPI_Recv(&bufi,1,MPI_INT,SOURCE,funcion,MPI_COMM_WORLD,&status);
             
-            if ( (*bufi) == 1)
+            if ( bufi == 1)
 			{
 				
                 //Recibi un 1. Entonces me toca trabajar. Me quedo esperando a que me mande el string
 				MPI_Probe(SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 				MPI_Get_count(&status, MPI_CHAR, &tamMsj);
 
-				free(buf);
-				buf = (char* )malloc(tamMsj);
+				char palabra[tamMsj];
 
-				MPI_Recv(buf,tamMsj,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
-				buf[tamMsj] = 0;
-                
-                miHashMap.addAndInc(buf);
+				MPI_Recv(palabra,tamMsj,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
+				//buf[tamMsj] = 0;
+                cout << "Agregando: " << palabra << endl;
+                miHashMap.addAndInc(palabra);
                 
                 trabajarArduamente();
                
 			}
 
-			int* soyRank;
-            soyRank = (int* )malloc(sizeof(MPI_INT));
-            soyRank[0] = rank;
-            
             //Respuesta OK bloqueante.
             //Se lee: Pasar el contenido que puse en &SOYRANK, 1 elemento del tipo, MPI_INT, destinado a SOURCE, con el tag 99, y furta_comm_world
             
-            MPI_Send(soyRank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
-
-            free(soyRank);
-			free(bufi);
-			free(buf);
+            MPI_Send(&rank,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
 
     	 }else if ( funcion == 3) {
             //Member
 
-            bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
+            int bufi;
 
+            char buf[msjcount];
             //Primer recieved. Los nodos se enteran de que tienen que hacer member
             MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
-
-            buf[msjcount] = 0;
+            cout<< buf << endl;
            
             bool res = miHashMap.member(buf);
             trabajarArduamente();
             
             if (res) 
             {
-                (*bufi) = 1;
-                MPI_Send(bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
+                bufi = 1;
+                MPI_Send(&bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
             }else 
             {
-                (*bufi) = 0;
-                MPI_Send(bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
+                bufi = 0;
+                MPI_Send(&bufi,1,MPI_INT,SOURCE,99,MPI_COMM_WORLD);
             }
 
-            free(bufi);
-            free(buf);
 
     	 }else if(funcion == 5){
             //QUIT
-            bufi = (int* )malloc(4); //Malloc size 4, tamaño de un entero.
+            int bufi;
             //Espero a recibir un quit
             
             // Libero mis recursos. El hashmap es local , se deberia destruir solo
-            (*bufi) = rank;
+            bufi = rank;
             // Le aviso al source que termine mandandole mi rank
             trabajarArduamente();
-            MPI_Send(bufi,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
+            MPI_Send(&bufi,1, MPI_INT,SOURCE, 99 , MPI_COMM_WORLD);
             
-            free(bufi);
-            free(buf);
             break;
 
          }else if(funcion == 4){
             //MAXIMUM.
             
             //Elimino el mensaje de maximum recibido.
+            char buf[1];
             MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
-
 
             //Itero sobre mi hashMap mandandole palabra por palabra
 
@@ -180,21 +157,18 @@ void nodo(unsigned int rank) {
 
             for (;it != itEnd; it++)
             {
-            	//buf = (char*)malloc((*it).size());
-                
                 char palabra[(*it).size() + 1];
                 strcpy(palabra, (*it).c_str());
                 //cout << palabra << " " << (*it).size()+1 << endl;
                 MPI_Send(palabra,(*it).size()+1, MPI_CHAR, SOURCE, 99 , MPI_COMM_WORLD);
-
             
             }
             
             //Le mando un mensaje a la consola que termine.
-            char* termine;
+            char termine;
             trabajarArduamente();
                 
-            MPI_Send(termine,1, MPI_CHAR,SOURCE, 90 , MPI_COMM_WORLD);
+            MPI_Send(&termine,1, MPI_CHAR,SOURCE, 90 , MPI_COMM_WORLD);
                     
          }
 
