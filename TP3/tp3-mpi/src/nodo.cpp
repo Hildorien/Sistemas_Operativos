@@ -56,9 +56,9 @@ void nodo(unsigned int rank) {
         
     		MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
     		
+            cout << "Soy el nodo " << rank << " y cargue el archivo " << buf << endl;
             //Estamos en condiciones de empezar LOAD. En buff tenemos los parametros. 
-    		cout << buf << endl;
-            miHashMap.load(buf);
+    		miHashMap.load(buf);
     		trabajarArduamente();
     		
     		int soyRank = rank;
@@ -94,7 +94,7 @@ void nodo(unsigned int rank) {
 
 				MPI_Recv(palabra,tamMsj,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
 				//buf[tamMsj] = 0;
-                cout << "Agregando: " << palabra << endl;
+                cout << "Soy el nodo " << rank << " y agregue la palabra " << palabra << endl;
                 miHashMap.addAndInc(palabra);
                 
                 trabajarArduamente();
@@ -114,8 +114,7 @@ void nodo(unsigned int rank) {
             char buf[msjcount];
             //Primer recieved. Los nodos se enteran de que tienen que hacer member
             MPI_Recv(buf,msjcount,MPI_CHAR,SOURCE,funcion,MPI_COMM_WORLD,&status);
-            cout<< buf << endl;
-           
+            
             bool res = miHashMap.member(buf);
             trabajarArduamente();
             
@@ -159,7 +158,6 @@ void nodo(unsigned int rank) {
             {
                 char palabra[(*it).size() + 1];
                 strcpy(palabra, (*it).c_str());
-                //cout << palabra << " " << (*it).size()+1 << endl;
                 MPI_Send(palabra,(*it).size()+1, MPI_CHAR, SOURCE, 99 , MPI_COMM_WORLD);
             
             }

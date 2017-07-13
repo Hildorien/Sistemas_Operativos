@@ -69,8 +69,6 @@ static void load(list<string> params) {
 
         strcpy(libro, (*it).c_str());
 
-        cout << libro << endl;
-
         MPI_Request req;
     
         MPI_Isend(libro, (*it).size()+1 , MPI_CHAR, nodoATrabajar, 1 , MPI_COMM_WORLD, &req);
@@ -154,8 +152,8 @@ static void maximum() {
 
         if(msgTag == 99){
 
-            //cout << " 2do Probe: long = " << largoMsj << ", nodo = " << status.MPI_SOURCE << endl;
             MPI_Recv(palabra, largoMsj, MPI_CHAR,source,99,MPI_COMM_WORLD,&status);
+            cout << "Recibi del nodo " << source << " la palabra " << palabra << endl;
             
             totalHashMap.addAndInc(palabra);
 
@@ -203,8 +201,9 @@ static void member(string key) {
     {
     
         MPI_Recv(&bufi,1,MPI_INT,MPI_ANY_SOURCE,99,MPI_COMM_WORLD,&status);
-        if( bufi == 1 ) 
+        if( bufi == 1 && !esta ) 
         {
+            cout << "Encontre la palabra " << key << " en el nodo " << status.MPI_SOURCE << endl;
             esta = true;
         }
 
@@ -220,7 +219,7 @@ static void addAndInc(string key) {
 
     MPI_Status status;
     int bufi; 
-    char palabra[key.size()]; 
+    char palabra[key.size() + 1 ]; 
         
 
     MPI_Request alertReq[np-1];
@@ -278,7 +277,7 @@ static void addAndInc(string key) {
 
     //Una vez sabemos que el nodo esta listo para trabajar, le enviamos la palabra
     MPI_Request req;
-    MPI_Isend(palabra, key.size() ,MPI_CHAR,nodoaLaburar,2,MPI_COMM_WORLD, &req);  
+    MPI_Isend(palabra, key.size()+1 ,MPI_CHAR,nodoaLaburar,2,MPI_COMM_WORLD, &req);  
 
 
     for(unsigned int i = 1 ; i < np ; i++){       
